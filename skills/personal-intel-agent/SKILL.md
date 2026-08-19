@@ -1,0 +1,102 @@
+---
+name: personal-intel-agent
+description: "Brief only when a watched topic moves; fold duplicate news."
+version: 0.1.0
+author: rahlquist (rahlquist), Hermes Agent
+license: MIT
+platforms: [linux, macos, windows]
+metadata:
+  hermes:
+    tags: [research, monitoring, briefing, rss, agent]
+    related_skills: [research, competitor-news-monitor]
+---
+
+# Personal Intelligence Agent
+
+Mimics a pull-to-you news intelligence agent (à la Zetik): you name what matters in one sentence; the agent reads the sources 24/7, folds twenty takes on one story into a single briefed card, surfaces adjacent signals beyond your radar, and remembers your preferences so the feed sharpens over time.
+
+What it is NOT: a chatbot that answers on demand, a summarizer of a single article, or a social feed to scroll. It is a standing watch that comes to you only when something actually moves. A silent tick with no movement is the correct, expected outcome — not a failure to report.
+
+## When to Use
+- User says "track/watch/monitor <X> and tell me when it moves", "keep me posted on…", "set up a watch on…", "brief me on <topic> daily/weekly".
+- User wants duplicate news coverage collapsed into one sourced card ("fold these into one").
+- User wants serendipitous discovery tied to their interests ("what am I missing?").
+- User wants the agent to learn preferences ("less celebrity coverage", "more primary sources").
+- Don't use for: one-off Q&A, summarizing a single URL (use `web_extract`), or live on-demand research (use `research`).
+
+## Prerequisites
+- Web tools active: `web_search`, `web_extract`; for JS/login-walled sources use `browser_exec`.
+- A state directory for trackers + memory. Default `./.intel/` (create with `write_file`); override via env `INTEL_DIR`.
+- Optional 24/7 loop: `cronjob` (self-contained prompt in references/loop-prompt.md).
+- Optional audio briefings: `text_to_speech`. Optional parallel entity runs: `delegate_task`.
+
+## Model (the loop)
+Eight leading words drive every run. TRACK → READ → FOLD → SIGNAL → DISCOVER, all shaped by MEMORY, emitted via DELIVER, repeated in LOOP.
+
+- **TRACK** — one sentence becomes a tracker spec + ranked source map.
+- **READ** — pull recent items from every matched source.
+- **FOLD** — collapse duplicate coverage; keep one card, attach all sources; filter noise.
+- **SIGNAL** — the briefed card: what happened, why it matters, every source, confidence.
+- **DISCOVER** — beyond-radar: adjacent stories scored against your interests.
+- **MEMORY** — persistent, editable user model (preferences, feedback, source trust).
+- **DELIVER** — feed (chat), file, RSS, or audio.
+- **LOOP** — schedule the tick; each run updates memory and delivers only on movement.
+
+## State files
+All under `INTEL_DIR` (= `./.intel` unless overridden):
+- `trackers/<slug>.yaml` — one spec per tracked entity (schema: references/tracker-schema.md).
+- `memory.md` — the open user model (schema: references/memory-schema.md).
+- `briefings/<date>-<slug>.md` — emitted cards (template: references/briefing-template.md).
+- `archive/<slug>.jsonl` — every item ever seen (dedup history across ticks).
+
+## Procedure
+
+### Branch A — Establish a tracker (TRACK)
+1. Parse the sentence into a spec: entity, type (company|person|team|rumor|niche|field), the signal classes that count as "moves" (launches, deals, injuries, filings), cadence (instant|daily|weekly), and noise rules (gossip/clickbait/fakes to drop). Write `trackers/<slug>.yaml` per `references/tracker-schema.md`.
+   - *Completion:* spec file exists with entity, type, ≥1 signal class, cadence, and ≥1 noise rule.
+2. **Source discovery.** For the entity run `web_search` with 3–5 queries spanning official / newsroom / fan-forum / filings-or-papers / blog-or-podcast. Classify each hit into a source type and a trust tier (primary|secondary|tertiary). Aim for 15–85 matched sources (Zetik's observed range).
+   - *Completion:* spec's `sources:` has ≥10 entries each with type + trust tier; duplicates removed.
+3. Arm the push: pick delivery channel(s) from MEMORY (default feed in chat). Record in spec.
+   - *Completion:* spec has `delivery:` set; tracker is "live".
+
+### Branch B — Run a tick (READ → FOLD → SIGNAL → DISCOVER)
+4. **READ.** For each source in the spec, fetch recent items via `web_extract` (or `browser_exec` for JS/login walls). Emit each as a JSONL row: `{title, url, source, published, snippet, kind, trust}`. Append to `archive/<slug>.jsonl`, skipping URLs already archived (dedup history).
+   - *Completion:* every source attempted; rows written; already-seen URLs not re-added.
+5. **FOLD.** Pipe the new rows through `scripts/fold.py` (char-trigram TF-IDF cosine, greedy single-linkage at `--sim 0.6`). It emits one card per cluster with canonical source + all attached sources + noise-filtered rejects written to stderr.
+   - *Completion:* every new row is in exactly one card or in the explicit rejects list with a reason.
+6. **SIGNAL.** For each surviving card, write a briefing card per `references/briefing-template.md`: headline, what happened, why it matters, folded-from N sources, attached source list, confidence/verification. Honor cadence — only emit when a card clears the signal threshold (new event, not a rehash).
+   - *Completion:* each emitted card passes the template; rehashes suppressed.
+7. **DISCOVER.** Separately run 1–2 broad `web_search` queries on adjacent topics derived from MEMORY interests. Fold/score; keep only items that connect to a stated interest where "everyone saw" the base story but missed the angle relevant to the user.
+   - *Completion:* 0+ discovery notes, each tied to a MEMORY interest and labeled "beyond radar".
+
+### Branch C — Feedback & memory (MEMORY)
+8. On any user correction ("less celebrity coverage", "more open-source AI", "no hot takes", "prefer primary sources"), update `memory.md` immediately: add a preference line with provenance (`said` vs `learned`) and timestamp. Reshape future queries/weights from it.
+   - *Completion:* memory.md reflects the change; next tick's source weighting honors it.
+
+### Branch D — Deliver (DELIVER)
+9. Emit the briefing per the tracker's `delivery:`:
+   - feed → return cards inline in chat.
+   - file → `write_file` to `briefings/<date>-<slug>.md`.
+   - rss → append an `<item>` to `briefings/feed.xml` (schema in references/briefing-template.md).
+   - audio → `text_to_speech` per card, deliver MEDIA path.
+   - *Completion:* channel received the cards; no movement = no delivery (silent tick is correct).
+
+## Pitfalls
+- **Silent tick is success, not failure.** Zetik's whole point: you only hear when something moves. Don't pad empty runs.
+- **Folding needs real items.** `fold.py` clusters what you collected; if READ fetched nothing, there's nothing to fold — report "no new items", don't invent.
+- **Trust tiers matter.** Tertiary/fan sources feed DISCOVER, not SIGNAL. Keep rumors in rumor-trackers verified-only.
+- **Memory is a contract.** Never train a black box; every preference must be visible/editable in `memory.md`.
+- **Don't doomscroll the agent.** Cap sources per tick (e.g. 40) and items per card; a large entity → use `delegate_task` per source-cluster.
+
+## Verification
+- Tracker spec is valid YAML in `references/tracker-schema.md` shape.
+- `python scripts/fold.py --self-test` passes (ships a tiny fixture).
+- A tick produces: archive rows appended, 0+ cards matching template, memory unchanged-or-updated, delivery confirmed.
+- `memory.md` shows the edit after a feedback turn.
+
+## References
+- `references/tracker-schema.md` — spec fields + examples (SpaceX, Taylor Swift, GTA 6 rumor).
+- `references/memory-schema.md` — open user-model format.
+- `references/briefing-template.md` — the signal card + RSS addendum.
+- `references/loop-prompt.md` — self-contained cron prompt for 24/7 LOOP.
+- `scripts/fold.py` — dependency-free dedup/fold. `--self-test` included.

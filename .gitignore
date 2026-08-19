@@ -1,0 +1,21 @@
+# never commit runtime state or secrets
+.intel/
+.env
+.env.*
+*.local.yaml
+
+# python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# os
+.DS_Store
+Thumbs.db
+
+# editor
+*.swp
+.idea/
+.vscode/
