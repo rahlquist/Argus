@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""fold.py — collapse duplicate news coverage into one card (Zetik's SIGNAL step).
+"""fold.py — collapse duplicate news coverage into one card (the SIGNAL step).
 
 Reads JSONL rows from stdin, one per collected item:
     {"title": str, "url": str, "source": str, "published": str,

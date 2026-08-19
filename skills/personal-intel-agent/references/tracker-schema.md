@@ -41,7 +41,7 @@ last_tick: null
 status: live               # live|paused
 ```
 
-## Examples (from Zetik's own showcased trackers)
+## Examples (showcased trackers)
 
 **Taylor Swift — Tours & Releases** (person · music)
 ```yaml

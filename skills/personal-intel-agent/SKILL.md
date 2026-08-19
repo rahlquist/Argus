@@ -13,7 +13,7 @@ metadata:
 
 # Personal Intelligence Agent
 
-Mimics a pull-to-you news intelligence agent (à la Zetik): you name what matters in one sentence; the agent reads the sources 24/7, folds twenty takes on one story into a single briefed card, surfaces adjacent signals beyond your radar, and remembers your preferences so the feed sharpens over time.
+Mimics a pull-to-you news intelligence agent: you name what matters in one sentence; the agent reads the sources 24/7, folds twenty takes on one story into a single briefed card, surfaces adjacent signals beyond your radar, and remembers your preferences so the feed sharpens over time.
 
 What it is NOT: a chatbot that answers on demand, a summarizer of a single article, or a social feed to scroll. It is a standing watch that comes to you only when something actually moves. A silent tick with no movement is the correct, expected outcome — not a failure to report.
 
@@ -54,7 +54,7 @@ All under `INTEL_DIR` (= `./.intel` unless overridden):
 ### Branch A — Establish a tracker (TRACK)
 1. Parse the sentence into a spec: entity, type (company|person|team|rumor|niche|field), the signal classes that count as "moves" (launches, deals, injuries, filings), cadence (instant|daily|weekly), and noise rules (gossip/clickbait/fakes to drop). Write `trackers/<slug>.yaml` per `references/tracker-schema.md`.
    - *Completion:* spec file exists with entity, type, ≥1 signal class, cadence, and ≥1 noise rule.
-2. **Source discovery.** For the entity run `web_search` with 3–5 queries spanning official / newsroom / fan-forum / filings-or-papers / blog-or-podcast. Classify each hit into a source type and a trust tier (primary|secondary|tertiary). Aim for 15–85 matched sources (Zetik's observed range).
+2. **Source discovery.** For the entity run `web_search` with 3–5 queries spanning official / newsroom / fan-forum / filings-or-papers / blog-or-podcast. Classify each hit into a source type and a trust tier (primary|secondary|tertiary). Aim for 15–85 matched sources.
    - *Completion:* spec's `sources:` has ≥10 entries each with type + trust tier; duplicates removed.
 3. Arm the push: pick delivery channel(s) from MEMORY (default feed in chat). Record in spec.
    - *Completion:* spec has `delivery:` set; tracker is "live".
@@ -82,7 +82,7 @@ All under `INTEL_DIR` (= `./.intel` unless overridden):
    - *Completion:* channel received the cards; no movement = no delivery (silent tick is correct).
 
 ## Pitfalls
-- **Silent tick is success, not failure.** Zetik's whole point: you only hear when something moves. Don't pad empty runs.
+- **Silent tick is success, not failure.** The agent only surfaces movement when something actually moves. Don't pad empty runs.
 - **Folding needs real items.** `fold.py` clusters what you collected; if READ fetched nothing, there's nothing to fold — report "no new items", don't invent.
 - **Trust tiers matter.** Tertiary/fan sources feed DISCOVER, not SIGNAL. Keep rumors in rumor-trackers verified-only.
 - **Memory is a contract.** Never train a black box; every preference must be visible/editable in `memory.md`.

@@ -1,6 +1,6 @@
 # Briefing Card Template (SIGNAL output)
 
-One card per folded cluster. This is the unit Zetik calls a "card": what
+One card per folded cluster. This is the folded "card" unit: what
 happened, why it matters, every source attached.
 
 ```markdown

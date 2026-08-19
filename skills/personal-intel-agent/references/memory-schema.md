@@ -1,6 +1,6 @@
 # Memory Schema — the open user model
 
-`memory.md` is the persistent, editable record of what Zetik would call
+`memory.md` is the persistent, editable record of
 "everything it learns about you, out in the open." Every preference carries
 **provenance** (`said` = user told us directly; `learned` = inferred from
 behavior) and a date. Nothing is hidden; the user can edit or delete any line.
