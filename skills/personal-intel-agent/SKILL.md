@@ -79,6 +79,7 @@ All under `INTEL_DIR` (= `./.intel` unless overridden):
    - file → `write_file` to `briefings/<date>-<slug>.md`.
    - rss → append an `<item>` to `briefings/feed.xml` (schema in references/briefing-template.md).
    - audio → `text_to_speech` per card, deliver MEDIA path.
+   - **bot** → deliver into a local Hermes **Bot profile** (e.g. `loco-bot`). cron's `deliver:` resolver has no profile-aware path, so the watch job keeps `deliver: local` and this step shells out: `bash scripts/notify_bot.sh <bot-profile>` fed the briefing on stdin (or pass a `.md` path). Verified path: `hermes -p <bot-profile> chat -Q -q "..."` lands in that bot's canonical Bot Chat. Support multiple bots by listing `bot:loco-bot,bot:senna` and looping.
    - *Completion:* channel received the cards; no movement = no delivery (silent tick is correct).
 
 ## Pitfalls

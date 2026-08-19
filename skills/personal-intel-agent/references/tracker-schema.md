@@ -36,6 +36,8 @@ sources:                    # discovered in TRACK step; >=10 entries
     trust: tertiary
 delivery:                  # from MEMORY; default = feed (chat)
   - feed
+  # - bot:loco-bot          # deliver into a local Hermes Bot profile's chat
+  # - bot:senna             # (cron deliver: stays 'local'; skill step calls notify_bot.sh)
 created: 2026-08-18
 last_tick: null
 status: live               # live|paused
