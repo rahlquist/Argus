@@ -39,7 +39,7 @@ Eight leading words drive every run. TRACK → READ → FOLD → SIGNAL → DISC
 - **SIGNAL** — the briefed card: what happened, why it matters, every source, confidence.
 - **DISCOVER** — beyond-radar: adjacent stories scored against your interests.
 - **MEMORY** — persistent, editable user model (preferences, feedback, source trust).
-- **DELIVER** — feed (chat), file, RSS, or audio.
+- **DELIVER** — feed (chat), file, RSS, audio, or local Bot profile (`bot:<name>`).
 - **LOOP** — schedule the tick; each run updates memory and delivers only on movement.
 
 ## State files

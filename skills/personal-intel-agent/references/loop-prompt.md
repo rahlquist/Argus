@@ -14,7 +14,7 @@ You are running a standing personal-intelligence watch. State dir: `./.intel/`
      `python scripts/fold.py < archive/<slug>.jsonl`.
    - For each surviving cluster that clears the tracker's signal threshold,
      write a briefing card to `briefings/<date>-<slug>.md` per the skill's
-     card template, and deliver per the tracker's `delivery:` (feed/file/rss/audio).
+     card template, and deliver per the tracker's `delivery:` (feed/file/rss/audio/bot:<profile>).
    - DISCOVER: run 1-2 adjacent searches seeded from `memory.md` Interests;
      keep only beyond-radar items tied to a stated interest.
    - Update `trackers/<slug>.yaml` `last_tick` to today.
