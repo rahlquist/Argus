@@ -11,11 +11,17 @@
 # is invoked by the skill's DELIVER step when a tracker's delivery lists a
 # `bot:<profile>` target (cron's deliver resolver has no profile-aware path).
 #
+# Every call is appended to $LOG (default ~/.intel/delivery.log) with the
+# outcome, so the bot leg is verifiable instead of silent:
+#   <iso>  bot=<profile>  status=ok|empty|usage|fail  bytes=<n>
+#
 # Exit codes:
 #   0  delivered (or nothing to send — silent tick is success)
 #   2  usage error
 #   3  hermes chat failed
 set -uo pipefail
+
+LOG="${INTEL_DELIVERY_LOG:-$HOME/.intel/delivery.log}"
 
 if [ "$#" -lt 1 ]; then
   echo "usage: notify_bot.sh <bot-profile> < <text> | <file>" >&2
@@ -32,18 +38,24 @@ elif [ ! -t 0 ]; then
   MSG="$(cat)"
 else
   echo "notify_bot.sh: no message (pipe text or pass a file path)" >&2
+  printf '%s  bot=%s  status=usage  bytes=0\n' "$(date -u +%FT%TZ)" "$BOT" >>"$LOG"
   exit 2
 fi
 
+BYTES="${#MSG}"
+
 # Silent tick: nothing to say, nothing to send.
 if [ -z "${MSG// }" ]; then
+  printf '%s  bot=%s  status=empty  bytes=0\n' "$(date -u +%FT%TZ)" "$BOT" >>"$LOG"
   exit 0
 fi
 
 # Deliver. -Q = quiet (only the agent's reply on stdout); -q = single query.
 if hermes -p "$BOT" chat -Q -q "$MSG" >/dev/null 2>&1; then
+  printf '%s  bot=%s  status=ok  bytes=%s\n' "$(date -u +%FT%TZ)" "$BOT" "$BYTES" >>"$LOG"
   exit 0
 else
+  printf '%s  bot=%s  status=fail  bytes=%s\n' "$(date -u +%FT%TZ)" "$BOT" "$BYTES" >>"$LOG"
   echo "notify_bot.sh: hermes -p $BOT chat failed" >&2
   exit 3
 fi
