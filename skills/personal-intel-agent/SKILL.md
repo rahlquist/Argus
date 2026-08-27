@@ -91,6 +91,9 @@ All under `INTEL_DIR` (= `./.intel` unless overridden):
 - **Trust tiers matter.** Tertiary/fan sources feed DISCOVER, not SIGNAL. Keep rumors in rumor-trackers verified-only.
 - **Memory is a contract.** Never train a black box; every preference must be visible/editable in `memory.md`.
 - **Don't doomscroll the agent.** Cap sources per tick (e.g. 40) and items per card; a large entity → use `delegate_task` per source-cluster.
+- **"Updated" is not "verified."** When a change touches multiple doc layers (skill-internal SKILL.md/references AND repo-level README/catalog), don't report done after editing only one layer. Grep the repo for stale references, update every layer that mentions the changed surface, then confirm remotely. A user asking "did you update the docs thoroughly?" is the correction firing — fix all layers, don't assert.
+- **`gh repo rename` can flip visibility.** Renaming a repo has, in practice, left the repo PUBLIC even when it started private. After any rename, re-verify `private: true` via the API and re-set `--visibility private --accept-visibility-change-consequences` if needed. Never assume rename preserves the privacy flag.
+- **Dry-run the gate before trusting a monitor.** For a `diff`/`threshold` tracker, prove the eval path with a synthesized prior state BEFORE relying on the nightly cron: fire on a simulated change, confirm silent on no-change. A monitor that can't prove its gate is worse than no monitor.
 
 ## Verification
 - Tracker spec is valid YAML in `references/tracker-schema.md` shape.
@@ -99,6 +102,10 @@ All under `INTEL_DIR` (= `./.intel` unless overridden):
 - A tick produces: archive rows appended, 0+ cards matching template, memory unchanged-or-updated, delivery confirmed.
 - `memory.md` shows the edit after a feedback turn.
 - A `diff`/`threshold` tracker writes `state/<slug>.json` every run; on a no-change tick it emits nothing (silent tick).
+- For any change that touches repo docs: remote HEAD reflects the commit, no stale references remain, and (if the repo is private) the API still reports `private: true`.
+
+## Converting existing monitors to trackers
+See `references/converting-monitors-to-trackers.md` — the real pattern for porting a standing monitor/cron job into a `personal-intel-agent` tracker (diff/threshold eval, `on_signal:` side-effects, `cron deliver: bot-chat:<profile>`), plus the dry-run and rename-privacy gotchas from a live migration.
 
 ## References
 - `references/tracker-schema.md` — spec fields + examples (SpaceX, Taylor Swift, GTA 6 rumor).
@@ -106,6 +113,7 @@ All under `INTEL_DIR` (= `./.intel` unless overridden):
 - `references/briefing-template.md` — the signal card + RSS addendum.
 - `references/diff-metrics.md` — `eval:` block shape (diff / threshold), metric units, and the CHANGED/UNCHANGED report format.
 - `references/loop-prompt.md` — self-contained cron prompt for 24/7 LOOP.
+- `references/converting-monitors-to-trackers.md` — port a monitor/cron job into a tracker; rename-privacy + dry-run gotchas.
 - `scripts/fold.py` — dependency-free dedup/fold. `--self-test` included.
 - `scripts/eval_signal.py` — diff/threshold gate. `--self-test` included.
 - `scripts/notify_bot.sh` — deliver a card into a local Hermes Bot profile's chat.
