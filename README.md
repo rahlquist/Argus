@@ -5,7 +5,7 @@ A personal collection of [Hermes Agent](https://hermes-agent.nousresearch.com/) 
 ## What's here
 
 ```
-hermes-skills/
+personal-intel-agent/
 ├── README.md              # this file
 ├── CONTRIBUTING.md        # how to add a new skill (the repeatable path)
 ├── LICENSE                # MIT
