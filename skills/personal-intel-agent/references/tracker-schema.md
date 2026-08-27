@@ -38,10 +38,46 @@ delivery:                  # from MEMORY; default = feed (chat)
   - feed
   # - bot:loco-bot          # deliver into a local Hermes Bot profile's chat
   # - bot:senna             # (cron deliver: stays 'local'; skill step calls notify_bot.sh)
+eval:                       # OPTIONAL — metric monitor / price tracker gate
+  mode: diff                # diff|threshold  (omit for a news/topic tracker)
+  trigger: pct              # threshold only: pct|abs
+  value: 0.10               # threshold only: fraction (pct) or amount (abs)
+  items:                   # which metrics gate (default: all). For threshold,
+                           # list only numeric metrics (price/count).
+    - lemonade_version
+    - bugzilla_2445615
+metrics:                   # the watched values; READ step fills `current`
+  - name: lemonade_version
+    unit: version           # version|date|status|count|price
+    source: "https://api.github.com/repos/lemonade-sdk/lemonade/releases?per_page=1"
+    extract: "first release tag_name"
+  - name: bugzilla_2445615
+    unit: status
+    source: "https://bugzilla.kernel.org/show_bug.cgi?id=2445615"
+    extract: "open|closed"
 created: 2026-08-18
 last_tick: null
 status: live               # live|paused
 ```
+
+### `eval:` block shape
+
+| Field | Meaning |
+|---|---|
+| `mode: diff` | Fire if **any** tracked metric's value changed vs last run. |
+| `mode: threshold` | Fire only when a numeric delta crosses `trigger`. |
+| `trigger: pct` + `value: 0.10` | `\|new−old\| / \|old\| >= 0.10` (e.g. a ≥10% price move). |
+| `trigger: abs` + `value: 20` | `\|new−old\| >= 20` (e.g. a stock-count delta of 20+). |
+| `items:` | Subset of metrics that gate the fire. For `threshold`, list **numeric only** (price/count); non-numeric items are ignored for the gate but still recorded for diff. Omit → all metrics gate. |
+
+`metrics:` declares each watched value, its `unit`, where to read it (`source`),
+and how to `extract` the scalar. Non-numeric units (`version`, `date`,
+`status`) diff by string equality; numeric (`price`, `count`) feed the
+threshold math. Full detail + report format: `references/diff-metrics.md`.
+
+For a plain topic/company tracker (SpaceX, Taylor Swift) there is **no**
+`eval:` block — the news FOLD/SIGNAL path handles it and the "move" is a
+surviving folded card.
 
 ## Examples (showcased trackers)
 

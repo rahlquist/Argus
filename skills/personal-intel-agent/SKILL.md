@@ -48,6 +48,7 @@ All under `INTEL_DIR` (= `./.intel` unless overridden):
 - `memory.md` — the open user model (schema: references/memory-schema.md).
 - `briefings/<date>-<slug>.md` — emitted cards (template: references/briefing-template.md).
 - `archive/<slug>.jsonl` — every item ever seen (dedup history across ticks).
+- `state/<slug>.json` — last-run metric snapshot for `diff`/`threshold` trackers (written every tick; first run = baseline).
 
 ## Procedure
 
@@ -59,12 +60,14 @@ All under `INTEL_DIR` (= `./.intel` unless overridden):
 3. Arm the push: pick delivery channel(s) from MEMORY (default feed in chat). Record in spec.
    - *Completion:* spec has `delivery:` set; tracker is "live".
 
-### Branch B — Run a tick (READ → FOLD → SIGNAL → DISCOVER)
+### Branch B — Run a tick (READ → EVAL → FOLD → SIGNAL → DISCOVER)
 4. **READ.** For each source in the spec, fetch recent items via `web_extract` (or `browser_exec` for JS/login walls). Emit each as a JSONL row: `{title, url, source, published, snippet, kind, trust}`. Append to `archive/<slug>.jsonl`, skipping URLs already archived (dedup history).
    - *Completion:* every source attempted; rows written; already-seen URLs not re-added.
+4b. **EVAL (optional, for diff/threshold trackers).** If the spec has an `eval:` block (metric monitors, price trackers), collect current metric values into `state/<slug>.current.json`, load `state/<slug>.json` (last run), and run `scripts/eval_signal.py` to get a verdict (`passed` / changed list / unchanged list). This is the gate: a monitor only emits when its chosen metrics actually move. See `references/diff-metrics.md`.
+   - *Completion:* verdict computed; if `passed` is false → silent tick (skip SIGNAL/DELIVER for this tracker).
 5. **FOLD.** Pipe the new rows through `scripts/fold.py` (char-trigram TF-IDF cosine, greedy single-linkage at `--sim 0.6`). It emits one card per cluster with canonical source + all attached sources + noise-filtered rejects written to stderr.
    - *Completion:* every new row is in exactly one card or in the explicit rejects list with a reason.
-6. **SIGNAL.** For each surviving card, write a briefing card per `references/briefing-template.md`: headline, what happened, why it matters, folded-from N sources, attached source list, confidence/verification. Honor cadence — only emit when a card clears the signal threshold (new event, not a rehash).
+6. **SIGNAL.** For each surviving card, write a briefing card per `references/briefing-template.md`: headline, what happened, why it matters, folded-from N sources, attached source list, confidence/verification. Honor cadence — only emit when a card clears the signal threshold (new event, not a rehash). For a `diff`/`threshold` tracker, lead with the CHANGED lines (old → new, source URL, delta) and a one-line UNCHANGED rollup, per `references/diff-metrics.md`.
    - *Completion:* each emitted card passes the template; rehashes suppressed.
 7. **DISCOVER.** Separately run 1–2 broad `web_search` queries on adjacent topics derived from MEMORY interests. Fold/score; keep only items that connect to a stated interest where "everyone saw" the base story but missed the angle relevant to the user.
    - *Completion:* 0+ discovery notes, each tied to a MEMORY interest and labeled "beyond radar".
@@ -92,12 +95,17 @@ All under `INTEL_DIR` (= `./.intel` unless overridden):
 ## Verification
 - Tracker spec is valid YAML in `references/tracker-schema.md` shape.
 - `python scripts/fold.py --self-test` passes (ships a tiny fixture).
+- `python scripts/eval_signal.py --self-test` passes (diff / pct / abs / first-run fixtures).
 - A tick produces: archive rows appended, 0+ cards matching template, memory unchanged-or-updated, delivery confirmed.
 - `memory.md` shows the edit after a feedback turn.
+- A `diff`/`threshold` tracker writes `state/<slug>.json` every run; on a no-change tick it emits nothing (silent tick).
 
 ## References
 - `references/tracker-schema.md` — spec fields + examples (SpaceX, Taylor Swift, GTA 6 rumor).
 - `references/memory-schema.md` — open user-model format.
 - `references/briefing-template.md` — the signal card + RSS addendum.
+- `references/diff-metrics.md` — `eval:` block shape (diff / threshold), metric units, and the CHANGED/UNCHANGED report format.
 - `references/loop-prompt.md` — self-contained cron prompt for 24/7 LOOP.
 - `scripts/fold.py` — dependency-free dedup/fold. `--self-test` included.
+- `scripts/eval_signal.py` — diff/threshold gate. `--self-test` included.
+- `scripts/notify_bot.sh` — deliver a card into a local Hermes Bot profile's chat.
