@@ -19,7 +19,15 @@ hermes-skills/
 │   └── personal-intel-agent/
 │       ├── SKILL.md
 │       ├── references/
+│       │   ├── tracker-schema.md   # spec fields + eval: block shape
+│       │   ├── diff-metrics.md     # diff/threshold monitor + price tracker contract
+│       │   ├── memory-schema.md     # open user-model format
+│       │   ├── briefing-template.md # the signal card + RSS addendum
+│       │   └── loop-prompt.md       # self-contained 24/7 cron prompt
 │       └── scripts/
+│           ├── fold.py              # dedup/fold news coverage (TF-IDF)
+│           ├── eval_signal.py       # diff/threshold gate for metric + price monitors
+│           └── notify_bot.sh        # deliver a card into a local Hermes Bot profile
 └── ...future skills...
 ```
 
@@ -47,3 +55,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). Short version: copy `skills/_template`, 
 ## Notes
 - Skills here are personal/reusable workflows, not necessarily upstream-hermes-conformant. The `personal-intel-agent` skill was built to mimic a commercial product's behavior; others will vary.
 - Stateful skills (like `personal-intel-agent`) keep their runtime state under `~/.intel/` on the host, never in this repo. See each skill's docs.
+- `personal-intel-agent` is two engines in one: a **news watch** (READ → FOLD → SIGNAL, silent when nothing moves) and a **metric/price monitor** (READ → `eval_signal.py` diff/threshold gate → SIGNAL only on real movement). Trackers declare which via the `eval:` block in `references/tracker-schema.md`; see `references/diff-metrics.md`.

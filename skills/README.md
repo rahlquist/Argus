@@ -5,7 +5,7 @@ Index of skills in this repo. Add a row here whenever you publish a new one
 
 | Skill | Purpose | Tier | Status |
 |---|---|---|---|
-| [`personal-intel-agent`](personal-intel-agent/) | Pull-to-you watch: name a topic, get briefed only when it moves; folds duplicate coverage, surfaces beyond-radar signals, learns preferences. | monitoring / research | ✅ live |
+| [`personal-intel-agent`](personal-intel-agent/) | Pull-to-you watch: name a topic, get briefed only when it moves. Two modes — **news watch** (folds duplicate coverage, surfaces beyond-radar signals, learns preferences) and **metric/price monitor** (`eval_signal.py` diff/threshold gate fires only on real movement, e.g. version bumps or price drops). Trackers declare mode via the `eval:` block. | monitoring / research | ✅ live |
 
 ## How to read this
 
