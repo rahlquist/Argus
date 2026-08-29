@@ -50,7 +50,9 @@ delivery:
 - Non-numeric units (`version`, `date`, `status`) → string equality diff.
 - Numeric units (`count`, `price`) → feed threshold math with `delta_abs`/`delta_pct`.
 - Every tick writes `state/<slug>.json` regardless of fire, so the next run
-  has a correct baseline (first run = baseline, fires once).
+  has a correct baseline. **First-run behavior differs by mode:** `mode: diff`
+  fires once on the first run (baseline establishment); `mode: threshold` stays
+  silent on the first run (it has no prior value to compute a delta against).
 
 ## Cron wiring (key gotcha)
 

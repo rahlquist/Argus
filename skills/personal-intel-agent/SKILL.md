@@ -1,10 +1,10 @@
 ---
 name: personal-intel-agent
 description: "Brief only when a watched topic moves; fold duplicate news."
-version: 0.1.0
+version: 0.2.0
 author: rahlquist (rahlquist), Hermes Agent
 license: MIT
-platforms: [linux, macos, windows]
+platforms: [linux, macos]
 metadata:
   hermes:
     tags: [research, monitoring, briefing, rss, agent]
@@ -30,7 +30,7 @@ What it is NOT: a chatbot that answers on demand, a summarizer of a single artic
 - Optional 24/7 loop: `cronjob` (self-contained prompt in references/loop-prompt.md).
 - Optional audio briefings: `text_to_speech`. Optional parallel entity runs: `delegate_task`.
 
-## Model (the loop)
+## How it works (the loop)
 Eight leading words drive every run. TRACK → READ → FOLD → SIGNAL → DISCOVER, all shaped by MEMORY, emitted via DELIVER, repeated in LOOP.
 
 - **TRACK** — one sentence becomes a tracker spec + ranked source map.
@@ -65,7 +65,7 @@ All under `INTEL_DIR` (= `./.intel` unless overridden):
    - *Completion:* every source attempted; rows written; already-seen URLs not re-added.
 4b. **EVAL (optional, for diff/threshold trackers).** If the spec has an `eval:` block (metric monitors, price trackers), collect current metric values into `state/<slug>.current.json`, load `state/<slug>.json` (last run), and run `scripts/eval_signal.py` to get a verdict (`passed` / changed list / unchanged list). This is the gate: a monitor only emits when its chosen metrics actually move. See `references/diff-metrics.md`.
    - *Completion:* verdict computed; if `passed` is false → silent tick (skip SIGNAL/DELIVER for this tracker).
-5. **FOLD.** Pipe the new rows through `scripts/fold.py` (char-trigram TF-IDF cosine, greedy single-linkage at `--sim 0.6`). It emits one card per cluster with canonical source + all attached sources + noise-filtered rejects written to stderr.
+5. **FOLD.** Pipe the new rows through `scripts/fold.py` (word-level TF-IDF cosine, greedy single-linkage at `--sim 0.6`). It emits one card per cluster with canonical source + all attached sources + noise-filtered rejects written to stderr.
    - *Completion:* every new row is in exactly one card or in the explicit rejects list with a reason.
 6. **SIGNAL.** For each surviving card, write a briefing card per `references/briefing-template.md`: headline, what happened, why it matters, folded-from N sources, attached source list, confidence/verification. Honor cadence — only emit when a card clears the signal threshold (new event, not a rehash). For a `diff`/`threshold` tracker, lead with the CHANGED lines (old → new, source URL, delta) and a one-line UNCHANGED rollup, per `references/diff-metrics.md`.
    - *Completion:* each emitted card passes the template; rehashes suppressed.

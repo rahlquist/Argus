@@ -1,5 +1,15 @@
 # never commit runtime state or secrets
+# INTEL_DIR may be anywhere (default ~/.intel or ./intel); cover all shapes.
 .intel/
+**/.intel/
+*.intel/
+intel/
+# state files emitted under any INTEL_DIR
+trackers/
+archive/
+briefings/
+state/
+memory.md
 .env
 .env.*
 *.local.yaml

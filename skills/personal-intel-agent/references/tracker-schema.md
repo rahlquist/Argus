@@ -46,6 +46,8 @@ eval:                       # OPTIONAL — metric monitor / price tracker gate
                            # list only numeric metrics (price/count).
     - lemonade_version
     - bugzilla_2445615
+on_signal:                 # OPTIONAL — side-effects run ONLY when the gate passes
+  - git_commit_push: "<repo-path> <commit-msg>"   # e.g. an hmem README update
 metrics:                   # the watched values; READ step fills `current`
   - name: lemonade_version
     unit: version           # version|date|status|count|price
@@ -74,6 +76,15 @@ status: live               # live|paused
 and how to `extract` the scalar. Non-numeric units (`version`, `date`,
 `status`) diff by string equality; numeric (`price`, `count`) feed the
 threshold math. Full detail + report format: `references/diff-metrics.md`.
+
+### `on_signal:` block (optional)
+
+Side-effects that run **only when the gate passes** (a real movement). The only
+supported action today is `git_commit_push`, which runs against the given repo
+path with the given commit message. Never use it to commit state files
+(`trackers/`, `archive/`, `state/`, `briefings/` under `INTEL_DIR`) — those
+live off-repo and are gitignored. Example in
+`references/converting-monitors-to-trackers.md`.
 
 For a plain topic/company tracker (SpaceX, Taylor Swift) there is **no**
 `eval:` block — the news FOLD/SIGNAL path handles it and the "move" is a

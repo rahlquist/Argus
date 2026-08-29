@@ -6,7 +6,7 @@ Reads JSONL rows from stdin, one per collected item:
      "snippet": str, "kind": str, "trust": "primary|secondary|tertiary"}
 
 Clusters rows by cosine similarity over word-level TF-IDF vectors using
-greedy single-linkage at --sim threshold (default 0.4).
+greedy single-linkage at --sim threshold (default 0.6).
 
 Emits one card per cluster to stdout as JSONL:
     {"canonical": {...row...}, "members": [...rows...], "source_count": N}
@@ -17,11 +17,12 @@ written to stderr as JSONL with a "reject_reason".
 No third-party dependencies (stdlib only).
 
 Usage:
-    python fold.py [--sim 0.6] [--noise gossip|clickbait] [--self-test]
+    python fold.py [--sim 0.6] [--noise gossip] [--noise clickbait] [--self-test]
 """
 
 import json
 import math
+import os
 import re
 import sys
 
@@ -95,7 +96,7 @@ def fold(rows, sim, noise_re):
         cards.append({
             "canonical": canonical,
             "members": members,
-            "source_count": len(members),
+            "source_count": len({m.get("source") for m in members}),
         })
     return cards
 
@@ -171,4 +172,10 @@ def run_self_test():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except BrokenPipeError:
+        # downstream (e.g. `head`) closed early; exit quietly
+        devnull = os.open(os.devnull, os.O_WRONLY)
+        os.dup2(devnull, sys.stdout.fileno())
+        sys.exit(0)

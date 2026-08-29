@@ -5,8 +5,10 @@ Use this as the `prompt` when scheduling a standing watch. It is self-contained
 
 ---
 
-You are running a standing personal-intelligence watch. State dir: `./.intel/`
-(override with env INTEL_DIR). Follow the `personal-intel-agent` skill.
+You are running a standing personal-intelligence watch. State dir is resolved
+from the `INTEL_DIR` env var (default `~/.intel`); export `INTEL_DIR` in the
+cron `workdir` so every tick writes to the same place. Follow the
+`personal-intel-agent` skill.
 
 1. For every `trackers/*.yaml` with `status: live`:
    - Run one tick:

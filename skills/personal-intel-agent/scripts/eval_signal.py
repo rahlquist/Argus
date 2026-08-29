@@ -98,12 +98,14 @@ def evaluate(eval_block, current, previous):
         else:
             unchanged.append(m)
 
-    # Gate decision
+    # Gate decision — only metrics listed in `items:` (or all, if omitted) may fire.
     passed = False
     if mode == "diff":
-        passed = len(changed) > 0
+        passed = any(c["metric"] in gate_items for c in changed)
     elif mode == "threshold":
         for c in changed:
+            if c["metric"] not in gate_items:
+                continue
             if c.get("delta_abs") is None:
                 continue  # non-numeric change doesn't count for threshold
             if trigger == "pct":
@@ -115,7 +117,7 @@ def evaluate(eval_block, current, previous):
                     passed = True
                     break
     else:
-        passed = len(changed) > 0
+        passed = any(c["metric"] in gate_items for c in changed)
 
     return {
         "passed": passed,
@@ -183,7 +185,16 @@ def _self_test():
     }
     vc = evaluate(cnt["eval"], cnt["current"], cnt["previous"])
     assert vc["passed"] is True, "35 delta >= 20 abs should pass"
-    print("self-test OK: diff(2 chg/1 unch), pct(10% pass/3% fail), first-run, abs(>=20 pass)")
+    # 5) items: gate — a changed metric NOT in items must NOT fire
+    gated = {
+        "eval": {"mode": "diff", "items": ["a"]},
+        "current": {"a": {"value": "v1"}, "b": {"value": "new!"}},
+        "previous": {"a": {"value": "v1"}, "b": {"value": "old"}},
+    }
+    vg = evaluate(gated["eval"], gated["current"], gated["previous"])
+    assert vg["passed"] is False, "non-gated metric change must NOT fire the gate"
+    assert "b" in [c["metric"] for c in vg["changed"]], "non-gated change still recorded in state"
+    print("self-test OK: diff(2 chg/1 unch), pct(10% pass/3% fail), first-run, abs(>=20 pass), items-gate")
 
 
 if __name__ == "__main__":

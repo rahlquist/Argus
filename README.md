@@ -15,15 +15,18 @@ personal-intel-agent/
 ├── skills/
 │   ├── README.md          # the catalog (index of published skills)
 │   ├── _template/         # copy-paste scaffold for a new skill
-│   │   └── SKILL.md
+│   │   ├── SKILL.md
+│   │   └── references/
+│   │       └── README.md
 │   └── personal-intel-agent/
 │       ├── SKILL.md
 │       ├── references/
-│       │   ├── tracker-schema.md   # spec fields + eval: block shape
+│       │   ├── tracker-schema.md   # spec fields + eval: + on_signal: block shape
 │       │   ├── diff-metrics.md     # diff/threshold monitor + price tracker contract
 │       │   ├── memory-schema.md     # open user-model format
 │       │   ├── briefing-template.md # the signal card + RSS addendum
-│       │   └── loop-prompt.md       # self-contained 24/7 cron prompt
+│       │   ├── loop-prompt.md       # self-contained 24/7 cron prompt
+│       │   └── converting-monitors-to-trackers.md # port a cron/monitor into a tracker
 │       └── scripts/
 │           ├── fold.py              # dedup/fold news coverage (TF-IDF)
 │           ├── eval_signal.py       # diff/threshold gate for metric + price monitors

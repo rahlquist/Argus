@@ -1,0 +1,43 @@
+name: ci
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  skill-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install test deps
+        run: python -m pip install --no-cache-dir pytest
+      - name: SKILL.md frontmatter check
+        run: |
+          python - <<'PY'
+          import re, pathlib, sys
+          f = pathlib.Path("skills/personal-intel-agent/SKILL.md").read_text()
+          m = re.search(r'^description:\s*"(.*)"', f, re.MULTILINE)
+          assert m, "no description frontmatter"
+          d = m.group(1)
+          assert len(d) <= 60, f"description too long ({len(d)}): {d}"
+          assert d.endswith("."), "description must end with a period"
+          # platforms must not claim windows unless tested
+          assert "windows" not in f.split("platforms:")[1].split("\n")[0], \
+            "windows unsupported; gate platforms to linux/macos"
+          print("frontmatter OK")
+          PY
+      - name: Script self-tests
+        run: |
+          python3 skills/personal-intel-agent/scripts/fold.py --self-test
+          python3 skills/personal-intel-agent/scripts/eval_signal.py --self-test
+      - name: Pytest suite (behavior contracts, no network)
+        run: |
+          python3 scripts/run_tests.sh
