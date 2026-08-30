@@ -59,3 +59,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). Short version: copy `skills/_template`, 
 - Skills here are personal/reusable workflows, not necessarily upstream-hermes-conformant. The `personal-intel-agent` skill was built to mimic a commercial product's behavior; others will vary.
 - Stateful skills (like `personal-intel-agent`) keep their runtime state under `~/.intel/` on the host, never in this repo. See each skill's docs.
 - `personal-intel-agent` is two engines in one: a **news watch** (READ → FOLD → SIGNAL, silent when nothing moves) and a **metric/price monitor** (READ → `eval_signal.py` diff/threshold gate → SIGNAL only on real movement). Trackers declare which via the `eval:` block in `references/tracker-schema.md`; see `references/diff-metrics.md`.
+
+## GitHub Actions
+
+The repository previously had one CI workflow, `.github/workflows/ci.yaml`, named **ci**. It ran on pushes to `main`/`master` and pull requests; it installed pytest, checked `SKILL.md` frontmatter, ran script self-tests, and ran the test suite.
+
+This repository-authored workflow was removed on 2026-08-30.
