@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """eval_signal.py — decide whether a tick's collected metrics pass the gate.
 
-Part of the personal-intel-agent skill. Sits between READ and SIGNAL. Reads
+Part of the Argus skill. Sits between READ and SIGNAL. Reads
 the previous state file, compares to the current collected values, and emits a
 JSON verdict that the skill's DELIVER step consumes.
 

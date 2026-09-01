@@ -34,10 +34,11 @@ sources:                    # discovered in TRACK step; >=10 entries
   - url: https://forum.nasaspaceflight.com/
     type: fan-forum
     trust: tertiary
-delivery:                  # from MEMORY; default = feed (chat)
-  - feed
-  # - bot:loco-bot          # deliver into a local Hermes Bot profile's chat
-  # - bot:senna             # (cron deliver: stays 'local'; skill step calls notify_bot.sh)
+delivery:                  # Argus output intent; cron routing is configured on the job
+  - feed                    # return cards as the cron job's final output
+  # Cron examples:
+  #   deliver: bot-chat:loco-bot
+  #   deliver: origin,bot-chat:senna
 eval:                       # OPTIONAL — metric monitor / price tracker gate
   mode: diff                # diff|threshold  (omit for a news/topic tracker)
   trigger: pct              # threshold only: pct|abs

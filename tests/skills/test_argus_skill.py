@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Behavior-contract tests for the personal-intel-agent skill scripts.
+"""Behavior-contract tests for the Argus skill scripts.
 
-Stdlib + pytest + unittest.mock only. No network. Mirrors hermes-agent
-skill-authoring HARDLINE #7: assert relationships/invariants, not frozen values.
+Stdlib + pytest only. No network. Assert relationships and invariants rather
+than frozen values.
 
-Run:  pytest tests/skills/test_personal_intel_agent_skill.py -q
+Run: pytest tests/skills/test_argus_skill.py -q
 """
 
 import importlib.util
@@ -15,7 +15,7 @@ import sys
 import pytest
 
 SKILL_DIR = os.path.join(
-    os.path.dirname(__file__), "..", "..", "skills", "personal-intel-agent", "scripts"
+    os.path.dirname(__file__), "..", "..", "skills", "argus", "scripts"
 )
 
 

@@ -1,67 +1,103 @@
-# Hermes Skills
+# Argus
 
-A personal collection of [Hermes Agent](https://hermes-agent.nousresearch.com/) skills, maintained for reuse across machines and profiles.
+Argus is a Hermes Agent skill for standing personal-intelligence watches. It
+tracks topics and typed metrics, folds duplicate coverage, and briefs only when
+a material signal moves.
 
-## What's here
+Hermes v0.21 now provides the scheduler infrastructure—persistent memory,
+previous-run continuity, change-gated monitor mode, durable per-job notepad,
+per-job reasoning effort, and Bot Chat delivery. Argus focuses on the domain
+work those primitives do not provide: tracker design, source discovery, trust
+ranking, URL-level history, semantic folding, metric thresholds, sourced
+briefing cards, and beyond-radar discovery.
+
+## Repository layout
 
 ```
-personal-intel-agent/
-├── README.md              # this file
-├── CONTRIBUTING.md        # how to add a new skill (the repeatable path)
-├── LICENSE                # MIT
-├── .gitignore
+argus/
+├── README.md
+├── CHANGELOG.md
+├── CONTRIBUTING.md
+├── LICENSE
 ├── scripts/
-│   └── install-skill.sh   # copy a skill into your local ~/.hermes/skills
+│   ├── install-skill.sh
+│   └── run_tests.sh
 ├── skills/
-│   ├── README.md          # the catalog (index of published skills)
-│   ├── _template/         # copy-paste scaffold for a new skill
-│   │   ├── SKILL.md
-│   │   └── references/
-│   │       └── README.md
-│   └── personal-intel-agent/
+│   ├── README.md
+│   ├── _template/
+│   └── argus/
 │       ├── SKILL.md
 │       ├── references/
-│       │   ├── tracker-schema.md   # spec fields + eval: + on_signal: block shape
-│       │   ├── diff-metrics.md     # diff/threshold monitor + price tracker contract
-│       │   ├── memory-schema.md     # open user-model format
-│       │   ├── briefing-template.md # the signal card + RSS addendum
-│       │   ├── loop-prompt.md       # self-contained 24/7 cron prompt
-│       │   └── converting-monitors-to-trackers.md # port a cron/monitor into a tracker
+│       │   ├── tracker-schema.md
+│       │   ├── diff-metrics.md
+│       │   ├── memory-schema.md
+│       │   ├── briefing-template.md
+│       │   ├── loop-prompt.md
+│       │   └── converting-monitors-to-trackers.md
 │       └── scripts/
-│           ├── fold.py              # dedup/fold news coverage (TF-IDF)
-│           ├── eval_signal.py       # diff/threshold gate for metric + price monitors
-│           └── notify_bot.sh        # deliver a card into a local Hermes Bot profile
-└── ...future skills...
+│           ├── fold.py
+│           └── eval_signal.py
+└── tests/skills/test_argus_skill.py
 ```
 
-Each skill is a self-contained folder under `skills/<skill-name>/`. Drop a folder in, register it in the catalog, done.
-
-## Install a skill
+## Install
 
 ```bash
-# from this repo root
-./scripts/install-skill.sh personal-intel-agent
-# → copies skills/personal-intel-agent into ~/.hermes/skills/personal-intel-agent
+./scripts/install-skill.sh argus
+# installs skills/argus into ~/.hermes/skills/argus
 ```
 
-Or copy manually:
+Or copy it manually:
+
 ```bash
-cp -r skills/personal-intel-agent ~/.hermes/skills/
+cp -r skills/argus ~/.hermes/skills/
 ```
 
-After install, the skill is available to Hermes on next session load. Edit `references/` and `scripts/` as needed — they live beside `SKILL.md`.
+Start a new Hermes session after installation so the skill index reloads.
 
-## Add a new skill
+## Hermes v0.21 architecture
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Short version: copy `skills/_template`, fill the frontmatter, write the body, add an entry to `skills/README.md`, commit.
+| Concern | Implementation |
+|---|---|
+| User preferences/interests | Hermes MEMORY.md/USER.md + `memory` tool |
+| Previous-run dedup context | Cron `continuity=true` / CLI `--continuity` |
+| Cheap change detection | Cron `monitor` / CLI `--monitor-script` or `--monitor-url` |
+| Small cursor/watermark state | Cron's bounded per-job notepad |
+| Bot delivery | Cron `deliver: bot-chat:<profile>` |
+| Semantic news folding | Argus `fold.py` |
+| Typed metric thresholds | Argus `eval_signal.py` |
+| Long-term URL history | Argus `archive/<slug>.jsonl` |
 
-## Notes
-- Skills here are personal/reusable workflows, not necessarily upstream-hermes-conformant. The `personal-intel-agent` skill was built to mimic a commercial product's behavior; others will vary.
-- Stateful skills (like `personal-intel-agent`) keep their runtime state under `~/.intel/` on the host, never in this repo. See each skill's docs.
-- `personal-intel-agent` is two engines in one: a **news watch** (READ → FOLD → SIGNAL, silent when nothing moves) and a **metric/price monitor** (READ → `eval_signal.py` diff/threshold gate → SIGNAL only on real movement). Trackers declare which via the `eval:` block in `references/tracker-schema.md`; see `references/diff-metrics.md`.
+The v0.21 rewrite removes the old `notify_bot.sh` shell shim and stops using an
+Argus-private `memory.md` user model. Native delivery is safer and creates a
+real Bot Chat turn; native memory prevents preferences from diverging between
+cron, Desktop, CLI, and messaging sessions. Continuity reduces repeat briefs,
+but the archive remains because prior-output injection is bounded and is not an
+item-level provenance database.
 
-## GitHub Actions
+See [`CHANGELOG.md`](CHANGELOG.md) and
+[`skills/argus/references/converting-monitors-to-trackers.md`](skills/argus/references/converting-monitors-to-trackers.md)
+for the full migration rationale.
 
-The repository previously had one CI workflow, `.github/workflows/ci.yaml`, named **ci**. It ran on pushes to `main`/`master` and pull requests; it installed pytest, checked `SKILL.md` frontmatter, ran script self-tests, and ran the test suite.
+## Two tracker engines
 
-This repository-authored workflow was removed on 2026-08-30.
+- **News watch:** READ → FOLD → SIGNAL → DISCOVER; duplicate reports become one
+  sourced card and no material movement means silence.
+- **Metric/price monitor:** READ → `eval_signal.py` → SIGNAL; `diff` and
+  `threshold` gates report exact old/new values and stay silent below the gate.
+
+Tracker mode is declared in `references/tracker-schema.md`. Runtime state stays
+under `${INTEL_DIR:-$HOME/.intel}` and is ignored by Git.
+
+## Validate
+
+```bash
+python3 skills/argus/scripts/fold.py --self-test
+python3 skills/argus/scripts/eval_signal.py --self-test
+python3 scripts/run_tests.sh
+```
+
+## Add another skill
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Copy `skills/_template`, complete the
+frontmatter and procedure, add a catalog row, test it, and commit.

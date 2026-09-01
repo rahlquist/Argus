@@ -46,7 +46,7 @@ This repo is structured so adding another skill is a copy-paste, not a redesign.
    ./scripts/install-skill.sh <your-skill-name>
    ```
    Then exercise it in a Hermes session. For skills with a self-test
-   (like `personal-intel-agent`'s `scripts/fold.py --self-test`), run it.
+   (like Argus's `scripts/fold.py --self-test`), run it.
 
 7. **Commit**
    ```bash
@@ -58,4 +58,4 @@ This repo is structured so adding another skill is a copy-paste, not a redesign.
 - Don't nest skills under category folders — keep `skills/<name>` flat.
 - Don't commit runtime state or secrets (`.intel/`, `.env`, `__pycache__/` are gitignored).
 - Don't write machine-local absolute paths into `SKILL.md`; use repo-relative paths.
-- Don't train a black box: if the skill keeps memory, make it visible/editable like `personal-intel-agent` does with `memory.md`.
+- Don't train a black box: put durable user preferences in Hermes persistent memory; keep task state in explicit files or bounded job state.
