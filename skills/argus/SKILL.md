@@ -1,7 +1,7 @@
 ---
 name: argus
 description: "Watch topics and brief only when material signals move."
-version: 0.3.0
+version: 0.4.0
 author: rahlquist (rahlquist), Hermes Agent
 license: MIT
 platforms: [linux, macos, windows]
@@ -15,7 +15,7 @@ metadata:
 
 Argus is a standing personal-intelligence watch: name what matters, and it reads ranked sources, folds duplicate reporting, detects material movement, and sends a sourced briefing instead of a feed to scroll. A silent tick with no movement is the correct result.
 
-Hermes v0.21 supplies the scheduler plumbing. Argus supplies the domain logic: tracker design, source discovery, trust ranking, URL-level deduplication, multi-source folding, threshold evaluation, briefing cards, and adjacent-signal discovery.
+Hermes v0.21 supplies the scheduler plumbing. Argus supplies the domain logic: tracker design, source discovery, trust ranking, URL-level deduplication, multi-source folding, threshold evaluation, briefing cards, adjacent-signal discovery, and bounded GitHub repository discovery. GitHub repositories use canonical identity plus sparse events; repeated observations never become archive growth. See `references/github-discovery.md`.
 
 ## When to Use
 - User says "track/watch/monitor <X> and tell me when it moves", "keep me posted on…", or "brief me on <topic> daily/weekly".
@@ -116,5 +116,6 @@ The user model lives in Hermes persistent memory, not in Argus state. See `refer
 - `references/diff-metrics.md` — diff/threshold semantics and report format.
 - `references/loop-prompt.md` — self-contained Hermes v0.21 cron prompt and setup.
 - `references/converting-monitors-to-trackers.md` — migration and gate-selection guide.
+- `references/github-discovery.md` — bounded GitHub discovery, repository identity, and sparse-event retention.
 - `scripts/fold.py` — dependency-free news folding; includes `--self-test`.
 - `scripts/eval_signal.py` — diff/threshold gate; includes `--self-test`.

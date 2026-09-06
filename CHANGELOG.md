@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.4.0 — Bounded GitHub discovery foundation
+
+- Added canonical, case-insensitive `owner/repository` identity handling.
+- Added compact per-repository state merging with source provenance and
+  `times_seen` tracking.
+- Added sparse `new_activity` events for distinct `pushed_at` transitions;
+  unchanged observations and star-only changes do not create archive events.
+- Added hard candidate bounds and documentation for daily discovery and weekly
+  re-evaluation, preventing GitHub scans from turning repeated observations
+  into unbounded Argus archive growth.
+- Added an explicit safety boundary: repository classifications are review
+  candidates, never automatic clone/install/execute permissions.
+- Deliberately did not import GitRadar's scheduler, duplicate cache layout, or
+  blind self-tuning threshold loop; Hermes cron and Argus state remain the
+  owners of those concerns.
+
 ## 0.3.0 — Argus / Hermes v0.21 native-cron rewrite
 
 ### Renamed
