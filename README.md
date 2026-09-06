@@ -9,7 +9,31 @@ previous-run continuity, change-gated monitor mode, durable per-job notepad,
 per-job reasoning effort, and Bot Chat delivery. Argus focuses on the domain
 work those primitives do not provide: tracker design, source discovery, trust
 ranking, URL-level history, semantic folding, metric thresholds, sourced
-briefing cards, and beyond-radar discovery.
+briefing cards, beyond-radar discovery, and bounded GitHub repository discovery.
+
+## GitHub discovery
+
+Argus can support GitHub discovery without turning every scan into permanent
+archive growth. Repositories are canonicalized by case-insensitive
+`owner/repository` identity and stored as one mutable state record. Repeated
+observations update `last_seen`, `times_seen`, and source provenance silently.
+Only meaningful events—such as a distinct `pushed_at` transition—become sparse
+archive events.
+
+The GitHub discovery foundation includes:
+
+- daily new-repository discovery and weekly activity re-evaluation as separate
+  modes;
+- merged sightings across GitHub Search and daily/weekly Trending;
+- bounded candidate, new-repository, and event counts per run;
+- explicit retention guidance for inactive repository state;
+- advisory classifications only—discovered code is never cloned, installed,
+  imported, or executed automatically.
+
+See [`skills/argus/references/github-discovery.md`](skills/argus/references/github-discovery.md)
+for the storage contract and deduplication rules. GitHub collection, scoring,
+and classification orchestration are intentionally separate from these pure
+identity/event helpers.
 
 ## Repository layout
 
@@ -33,11 +57,15 @@ argus/
 │       │   ├── memory-schema.md
 │       │   ├── briefing-template.md
 │       │   ├── loop-prompt.md
-│       │   └── converting-monitors-to-trackers.md
+│       │   ├── converting-monitors-to-trackers.md
+│       │   └── github-discovery.md
 │       └── scripts/
 │           ├── fold.py
-│           └── eval_signal.py
-└── tests/skills/test_argus_skill.py
+│           ├── eval_signal.py
+│           └── github_discovery.py
+└── tests/skills/
+    ├── test_argus_skill.py
+    └── test_github_discovery.py
 ```
 
 ## Install
@@ -94,6 +122,7 @@ under `${INTEL_DIR:-$HOME/.intel}` and is ignored by Git.
 ```bash
 python3 skills/argus/scripts/fold.py --self-test
 python3 skills/argus/scripts/eval_signal.py --self-test
+python3 -m pytest tests/skills -q
 python3 scripts/run_tests.sh
 ```
 

@@ -5,7 +5,7 @@ Index of skills in this repo. Add a row here whenever you publish a new one
 
 | Skill | Purpose | Tier | Status |
 |---|---|---|---|
-| [`argus`](argus/) | Standing intelligence watch: folds duplicate coverage, surfaces beyond-radar signals, and gates metric/price briefings on real movement. Uses Hermes v0.21 native memory, continuity, monitor mode, notepad state, reasoning effort, and Bot Chat delivery. | monitoring / research | ✅ live |
+| [`argus`](argus/) | Standing intelligence watch: folds duplicate coverage, discovers bounded GitHub repository signals, surfaces beyond-radar findings, and gates metric/price briefings on real movement. Uses Hermes v0.21 native memory, continuity, monitor mode, notepad state, reasoning effort, and Bot Chat delivery. | monitoring / research | ✅ live |
 
 ## How to read this
 
