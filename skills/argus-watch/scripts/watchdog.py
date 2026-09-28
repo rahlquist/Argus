@@ -3,16 +3,34 @@
 Argus Watch — zero-token watchdog for Hermes cron jobs.
 
 Runs as a --no-agent cron job. Checks all active cron jobs for:
-- Overdue runs (last_run older than 1.5x expected interval)
+- Overdue runs (last_run older than grace period)
 - Paused/disabled jobs that should be active
 - Failed/errored runs
 
 Outputs alerts only when something is wrong. Silent when all jobs are healthy.
+
+Configuration:
+  --grace-period MULTIPLIER  Grace period multiplier (default: 1.5)
+  --exclude JOB_ID          Exclude a job from checks (repeatable)
+  --config PATH             Path to JSON config file
+
+Config file format:
+{
+  "grace_period": 1.5,
+  "excludes": ["job-id-1", "job-id-2"],
+  "jobs": {
+    "job-id-1": {"grace_period": 2.0},
+    "job-id-2": {"grace_period": 1.0}
+  }
+}
 """
 
+import argparse
+import json
 import subprocess
 import sys
 import re
+import os
 from datetime import datetime, timezone, timedelta
 
 def parse_cron_list():
@@ -122,9 +140,16 @@ def parse_timestamp(ts_str):
         return None
 
 
-def check_job(job, now):
+def check_job(job, now, grace_period=1.5, excludes=None):
     """Check a single job for issues. Returns list of alerts."""
     alerts = []
+    
+    if excludes is None:
+        excludes = set()
+    
+    # Skip excluded jobs
+    if job["id"] in excludes:
+        return alerts
     
     # Skip intentionally paused jobs
     if job["status"] == "paused":
@@ -152,16 +177,22 @@ def check_job(job, now):
         
         interval_min = parse_schedule_interval(job["schedule"])
         expected_interval = timedelta(minutes=interval_min)
-        grace_period = expected_interval * 1.5
+        
+        # Use job-specific grace period if available
+        job_grace = grace_period
+        # Note: job-specific grace periods are handled via config in main()
+        
+        grace_period_td = expected_interval * job_grace
         
         time_since_last_run = now - last_run_dt
         
-        if time_since_last_run > grace_period:
+        if time_since_last_run > grace_period_td:
             hours_overdue = (time_since_last_run - expected_interval).total_seconds() / 3600
             alerts.append(
                 f"⚠️ Job '{job['name']}' ({job['id']}) is overdue.\n"
                 f"  Last run: {job['last_run']} ({hours_overdue:.1f}h ago)\n"
                 f"  Expected: every {interval_min} minutes\n"
+                f"  Grace period: {job_grace}x interval\n"
                 f"  Check: hermes cron runs {job['id']}"
             )
     
@@ -176,7 +207,35 @@ def check_job(job, now):
     return alerts
 
 
+def load_config(config_path):
+    """Load configuration from JSON file."""
+    if not config_path:
+        return {}
+    try:
+        with open(config_path, 'r') as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        print(f"⚠️ Watchdog Warning: Could not load config: {e}")
+        return {}
+
+
 def main():
+    parser = argparse.ArgumentParser(description="Argus Watch — zero-token watchdog for Hermes cron jobs")
+    parser.add_argument("--grace-period", type=float, default=1.5,
+                        help="Grace period multiplier (default: 1.5)")
+    parser.add_argument("--exclude", action="append", default=[],
+                        help="Exclude a job from checks (repeatable)")
+    parser.add_argument("--config", type=str, default=None,
+                        help="Path to JSON config file")
+    args = parser.parse_args()
+    
+    # Load config file if provided
+    config = load_config(args.config)
+    
+    # Config file values override defaults
+    grace_period = config.get("grace_period", args.grace_period)
+    excludes = set(config.get("excludes", []) + args.exclude)
+    
     now = datetime.now(timezone.utc)
     
     try:
@@ -191,7 +250,12 @@ def main():
     
     all_alerts = []
     for job in jobs:
-        alerts = check_job(job, now)
+        # Check for job-specific grace period in config
+        job_grace = grace_period
+        if "jobs" in config and job["id"] in config["jobs"]:
+            job_grace = config["jobs"][job["id"]].get("grace_period", grace_period)
+        
+        alerts = check_job(job, now, job_grace, excludes)
         all_alerts.extend(alerts)
     
     if all_alerts:

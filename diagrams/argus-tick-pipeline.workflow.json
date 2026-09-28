@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Argus Tick Pipeline",
+    "subtitle": "READ → EVAL → FOLD → SIGNAL → DISCOVER",
+    "output": "argus-tick-pipeline.html"
+  },
+  "lanes": [
+    { "id": "read", "label": "READ" },
+    { "id": "eval", "label": "EVAL" },
+    { "id": "fold", "label": "FOLD" },
+    { "id": "signal", "label": "SIGNAL" },
+    { "id": "discover", "label": "DISCOVER" }
+  ],
+  "phases": [
+    { "id": "fetch", "label": "Fetch Sources", "fromCol": 0, "toCol": 1 },
+    { "id": "process", "label": "Process", "fromCol": 1, "toCol": 3 },
+    { "id": "output", "label": "Output", "fromCol": 3, "toCol": 4 }
+  ],
+  "groups": [
+    { "id": "news", "label": "News Path", "lane": "fold", "fromCol": 1, "toCol": 2, "variant": "emphasis" }
+  ],
+  "mainPath": ["fetch", "eval", "fold", "signal", "discover", "deliver"],
+  "nodes": [
+    { "id": "fetch", "lane": "read", "col": 0, "type": "frontend", "label": "Fetch Sources", "sublabel": "web_search, web_extract" },
+    { "id": "eval", "lane": "eval", "col": 1, "type": "backend", "label": "Eval Metrics", "sublabel": "eval_signal.py" },
+    { "id": "fold", "lane": "fold", "col": 1, "type": "backend", "label": "Fold News", "sublabel": "fold.py" },
+    { "id": "signal", "lane": "signal", "col": 2, "type": "backend", "label": "Signal Cards", "sublabel": "briefing-template.md" },
+    { "id": "discover", "lane": "discover", "col": 3, "type": "frontend", "label": "Discover", "sublabel": "adjacent searches" },
+    { "id": "deliver", "lane": "signal", "col": 4, "type": "external", "label": "Deliver", "sublabel": "bot-chat" }
+  ],
+  "edges": [
+    { "from": "fetch", "to": "eval", "variant": "emphasis" },
+    { "from": "eval", "to": "fold", "label": "news", "variant": "emphasis" },
+    { "from": "fold", "to": "signal", "variant": "emphasis" },
+    { "from": "signal", "to": "discover", "variant": "emphasis" },
+    { "from": "discover", "to": "deliver", "variant": "emphasis" }
+  ],
+  "cards": []
+}

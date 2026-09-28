@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.3 — Troubleshooting, case studies, watchdog config, tests
+
+- Added `references/troubleshooting.md` — common issues and resolutions
+- Added `references/case-studies.md` — real-world signal detection examples
+- Updated `skills/argus-watch/scripts/watchdog.py` — configurable grace periods, exclusions, config file
+- Added `tests/skills/test_argus_watch.py` — comprehensive watchdog tests
+- Updated `skills/argus-watch/SKILL.md` — documented configuration options
+- Version: 0.4.2 → 0.4.3
+
 ## 0.4.2 — Argus Watch skill, error codes, GitHub discovery clarity
 
 - Added `skills/argus-watch/` — zero-token watchdog skill for cron job health

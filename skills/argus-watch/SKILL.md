@@ -50,11 +50,46 @@ A zero-token watchdog for Hermes cron jobs. Monitors job health and alerts on fa
 
 ## Configuration
 
+### Command-line Options
+
 | Option | Default | Description |
 |---|---|---|
-| Schedule | `every 30m` | How often to check job health |
-| Grace period | 1.5x interval | How long to wait before flagging a job |
-| Delivery | `bot-chat:<profile>` | Where to send alerts |
+| `--grace-period` | `1.5` | Grace period multiplier |
+| `--exclude` | — | Exclude a job from checks (repeatable) |
+| `--config` | — | Path to JSON config file |
+
+### Config File
+
+```json
+{
+  "grace_period": 1.5,
+  "excludes": ["job-id-1", "job-id-2"],
+  "jobs": {
+    "job-id-1": {"grace_period": 2.0},
+    "job-id-2": {"grace_period": 1.0}
+  }
+}
+```
+
+- `grace_period` — default grace period multiplier (default: 1.5)
+- `excludes` — job IDs to skip during checks
+- `jobs.<id>.grace_period` — per-job override of the grace period
+
+### Per-job Grace Periods
+
+Different jobs may need different grace periods:
+
+- **Fast jobs** (every 5m): grace period 1.0x = 5 minutes
+- **Normal jobs** (every 60m): grace period 1.5x = 90 minutes
+- **Slow jobs** (every 24h): grace period 2.0x = 48 hours
+
+Set per-job grace periods in the config file:
+
+```json
+{
+  "jobs-id-1": {"grace_period": 2.0}
+}
+```
 
 ## Scripts
 

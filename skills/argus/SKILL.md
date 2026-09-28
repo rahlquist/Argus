@@ -1,7 +1,7 @@
 ---
 name: argus
 description: "Standing intelligence watch: tracks topics and typed metrics, folds duplicate coverage, and briefs only when material signals move. Silent tick = success."
-version: 0.4.2
+version: 0.4.3
 author: rahlquist (rahlquist), Hermes Agent
 license: MIT
 platforms: [linux, macos, windows]
@@ -120,6 +120,9 @@ The user model lives in Hermes persistent memory, not in Argus state. See `refer
 | Migrating from pre-v0.21 | `references/converting-monitors-to-trackers.md` |
 | Using GitHub as a source | `references/github-discovery.md` |
 | First tick / tool failure | `references/hermes-conventions.md` |
+| Troubleshooting | `references/troubleshooting.md` |
+| Case studies | `references/case-studies.md` |
+| Error codes | `references/error-codes.md` |
 | Setting up a watchdog | `skills/argus-watch/SKILL.md` |
 
 ## Quick Start
@@ -141,6 +144,13 @@ The user model lives in Hermes persistent memory, not in Argus state. See `refer
 - **Single-user.** Argus is designed for one user's intelligence watch, not multi-tenant monitoring.
 
 ## Skill Changelog
+
+### 0.4.3
+- Added `references/troubleshooting.md` — common issues and resolutions.
+- Added `references/case-studies.md` — real-world signal detection examples.
+- Updated `skills/argus-watch/scripts/watchdog.py` — configurable grace periods, exclusions, config file.
+- Added `tests/skills/test_argus_watch.py` — comprehensive watchdog tests.
+- Updated `skills/argus-watch/SKILL.md` — documented configuration options.
 
 ### 0.4.2
 - Added `skills/argus-watch/` — zero-token watchdog skill for cron job health.
@@ -179,6 +189,9 @@ The user model lives in Hermes persistent memory, not in Argus state. See `refer
 - `references/converting-monitors-to-trackers.md` — migration and gate-selection guide.
 - `references/github-discovery.md` — bounded GitHub discovery, repository identity, and sparse-event retention.
 - `references/hermes-conventions.md` — Hermes platform conventions (background processes, stale-write, typing, context, errors).
+- `references/troubleshooting.md` — common issues and resolutions.
+- `references/case-studies.md` — real-world signal detection examples.
+- `references/error-codes.md` — centralized error code reference.
 - `skills/argus-watch/SKILL.md` — zero-token watchdog for cron job health.
 - `scripts/fold.py` — dependency-free news folding; includes `--self-test`.
 - `scripts/eval_signal.py` — diff/threshold gate; includes `--self-test`.

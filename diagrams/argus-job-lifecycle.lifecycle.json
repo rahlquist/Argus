@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Argus Job Lifecycle",
+    "subtitle": "States and terminal outcomes",
+    "output": "argus-job-lifecycle.html"
+  },
+  "lanes": [
+    { "id": "main", "label": "Job States" },
+    { "id": "waiting", "label": "Interruptions" },
+    { "id": "terminal", "label": "Terminal Exits" }
+  ],
+  "states": [
+    { "id": "scheduled", "type": "start", "label": "Scheduled", "lane": "main", "col": 0, "step": "01" },
+    { "id": "running", "type": "active", "label": "Running", "lane": "main", "col": 2, "step": "02" },
+    { "id": "paused", "type": "waiting", "label": "Paused", "lane": "waiting", "col": 0 },
+    { "id": "error", "type": "waiting", "label": "Error", "lane": "waiting", "col": 2 },
+    { "id": "success", "type": "success", "label": "Success", "lane": "terminal", "col": 0 },
+    { "id": "failed", "type": "failure", "label": "Failed", "lane": "terminal", "col": 2 }
+  ],
+  "transitions": [
+    { "from": "scheduled", "to": "running", "variant": "emphasis" },
+    { "from": "running", "to": "paused", "label": "pause", "variant": "security", "fromSide": "bottom", "toSide": "right" },
+    { "from": "running", "to": "error", "label": "error", "variant": "security", "fromSide": "bottom", "toSide": "left" },
+    { "from": "running", "to": "success", "label": "complete", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "labelDy": 41 },
+    { "from": "paused", "to": "running", "label": "resume", "variant": "emphasis" },
+    { "from": "error", "to": "running", "label": "retry", "variant": "emphasis" },
+    { "from": "error", "to": "failed", "label": "give up", "variant": "security" }
+  ],
+  "cards": []
+}
