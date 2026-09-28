@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.4.1 — Hermes conventions, watchdog, and briefing format
+
+- Added `references/hermes-conventions.md` — background process pattern,
+  stale-write protection, parameter typing, context compression, error
+  handling, and silent tick output.
+- Added `references/watchdog.md` — heartbeat pattern and watchdog cron job
+  specification for liveness monitoring.
+- Updated `references/briefing-template.md` — supports both markdown
+  (bot-chat) and RSS 2.0 (feed) formats.
+- Updated skill description for better triggering.
+- Added "When to Use Which Reference" mapping table to SKILL.md.
+- Added "Quick Start" section to SKILL.md.
+- Added "Known Limitations" section to SKILL.md.
+- Added skill-level changelog to SKILL.md.
+- Updated README.md with watchdog section.
+
 ## 0.4.0 — Bounded GitHub discovery foundation
 
 - Added canonical, case-insensitive `owner/repository` identity handling.

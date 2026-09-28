@@ -67,3 +67,11 @@ Do not pad a no-change run. If no tracker has a material signal, return no
 substantive briefing content. For jobs that require guaranteed scheduler-level
 no-delivery behavior, use native monitor mode or a `no_agent` script gate.
 Never invent an item, metric, URL, delta, or source result.
+
+At the end of every tick (silent or not), write a heartbeat file to
+`heartbeats/<slug>.json` with the current timestamp and status. See
+`references/watchdog.md` for the full specification.
+
+For background fetches, use `terminal(command="...", background=true,
+notify_on_complete=true)` — never `nohup`/`disown`/`setsid`. See
+`references/hermes-conventions.md` for all Hermes platform conventions.

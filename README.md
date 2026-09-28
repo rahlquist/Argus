@@ -114,6 +114,13 @@ for the full migration rationale.
 - **Metric/price monitor:** READ → `eval_signal.py` → SIGNAL; `diff` and
   `threshold` gates report exact old/new values and stay silent below the gate.
 
+## Watchdog
+
+A separate cron job watches for ticks appearing on schedule. Each Argus tick
+writes a heartbeat file; the watchdog alerts if a heartbeat is stale. This
+decouples "did the job run?" from "did the job find anything?" See
+`skills/argus/references/watchdog.md`.
+
 Tracker mode is declared in `references/tracker-schema.md`. Runtime state stays
 under `${INTEL_DIR:-$HOME/.intel}` and is ignored by Git.
 

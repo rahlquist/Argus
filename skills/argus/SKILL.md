@@ -1,7 +1,7 @@
 ---
 name: argus
-description: "Watch topics and brief only when material signals move."
-version: 0.4.0
+description: "Standing intelligence watch: tracks topics and typed metrics, folds duplicate coverage, and briefs only when material signals move. Silent tick = success."
+version: 0.4.1
 author: rahlquist (rahlquist), Hermes Agent
 license: MIT
 platforms: [linux, macos, windows]
@@ -109,13 +109,71 @@ The user model lives in Hermes persistent memory, not in Argus state. See `refer
 - `cronjob list` confirms native continuity/delivery/monitor fields instead of a delivery shim.
 - Remote repository HEAD, documentation, repository visibility, and CI/check state are verified after push.
 
+## When to Use Which Reference
+
+| Situation | Read this |
+|---|---|
+| Designing a new tracker | `references/tracker-schema.md` |
+| Configuring a price/metric monitor | `references/diff-metrics.md` |
+| Writing a briefing card | `references/briefing-template.md` |
+| Setting up a cron job | `references/loop-prompt.md` |
+| Migrating from pre-v0.21 | `references/converting-monitors-to-trackers.md` |
+| Using GitHub as a source | `references/github-discovery.md` |
+| First tick / tool failure | `references/hermes-conventions.md` |
+| Setting up a watchdog | `references/watchdog.md` |
+
+## Quick Start
+
+1. **Design a tracker** — write `trackers/<slug>.yaml` per `references/tracker-schema.md`.
+2. **Discover sources** — 3–5 searches, assign trust tiers, record in tracker.
+3. **Create the cron job** — self-contained prompt, `argus` skill, `continuity=true`, stable `workdir`, delivery target.
+4. **Run a tick** — READ → EVAL → FOLD → SIGNAL → DISCOVER. Silent tick = success.
+5. **Write a heartbeat** — at the end of every tick, write `heartbeats/<slug>.json` (see `references/watchdog.md`).
+6. **Set up a watchdog** — separate cron job that checks heartbeats and alerts on stale ticks.
+
+## Known Limitations
+
+- **No real-time data.** Argus ticks are scheduled; it cannot monitor streaming sources or push notifications.
+- **No authenticated sources.** Argus cannot log into paywalled or account-gated sources.
+- **No code execution.** Argus never clones, installs, imports, or runs discovered code.
+- **Ambiguous diffs require human judgment.** When a source reports conflicting values, Argus escalates rather than guessing.
+- **Context bloat.** Large tracker YAMLs, long histories, and many sources can strain context. Use `references/hermes-conventions.md` to manage this.
+- **Single-user.** Argus is designed for one user's intelligence watch, not multi-tenant monitoring.
+
+## Skill Changelog
+
+### 0.4.1
+- Added `references/hermes-conventions.md` — background processes, stale-write protection, parameter typing, context compression, error handling.
+- Added `references/watchdog.md` — heartbeat pattern and watchdog cron job specification.
+- Updated `references/briefing-template.md` — supports both markdown (bot-chat) and RSS 2.0 (feed) formats.
+- Updated description for better skill triggering.
+- Added "When to Use Which Reference" mapping table.
+- Added "Quick Start" section.
+- Added "Known Limitations" section.
+
+### 0.4.0
+- Added bounded GitHub discovery with canonical identity and sparse events.
+- Added `references/github-discovery.md`.
+- Updated `references/briefing-template.md` — supports both markdown (bot-chat) and RSS 2.0 (feed) formats.
+- Updated description for better skill triggering.
+- Added "When to Use Which Reference" mapping table.
+- Added "Quick Start" section.
+- Added "Known Limitations" section.
+
+### 0.3.0
+- Restructured into SKILL.md + references (was 34k chars single file).
+- Removed historical jargon and one-off events from core skill.
+- Added CHANGELOG.md for repo-level tracking.
+
 ## References
 - `references/tracker-schema.md` — tracker fields, delivery, `eval:`, and `on_signal:`.
 - `references/memory-schema.md` — Hermes memory model and migration from legacy `memory.md`.
-- `references/briefing-template.md` — signal card and RSS addendum.
+- `references/briefing-template.md` — markdown and RSS briefing formats.
 - `references/diff-metrics.md` — diff/threshold semantics and report format.
 - `references/loop-prompt.md` — self-contained Hermes v0.21 cron prompt and setup.
 - `references/converting-monitors-to-trackers.md` — migration and gate-selection guide.
 - `references/github-discovery.md` — bounded GitHub discovery, repository identity, and sparse-event retention.
+- `references/hermes-conventions.md` — Hermes platform conventions (background processes, stale-write, typing, context, errors).
+- `references/watchdog.md` — heartbeat pattern and watchdog cron job.
 - `scripts/fold.py` — dependency-free news folding; includes `--self-test`.
 - `scripts/eval_signal.py` — diff/threshold gate; includes `--self-test`.
