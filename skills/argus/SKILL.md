@@ -1,7 +1,7 @@
 ---
 name: argus
 description: "Standing intelligence watch: tracks topics and typed metrics, folds duplicate coverage, and briefs only when material signals move. Silent tick = success."
-version: 0.4.1
+version: 0.4.2
 author: rahlquist (rahlquist), Hermes Agent
 license: MIT
 platforms: [linux, macos, windows]
@@ -120,7 +120,7 @@ The user model lives in Hermes persistent memory, not in Argus state. See `refer
 | Migrating from pre-v0.21 | `references/converting-monitors-to-trackers.md` |
 | Using GitHub as a source | `references/github-discovery.md` |
 | First tick / tool failure | `references/hermes-conventions.md` |
-| Setting up a watchdog | `references/watchdog.md` |
+| Setting up a watchdog | `skills/argus-watch/SKILL.md` |
 
 ## Quick Start
 
@@ -128,7 +128,7 @@ The user model lives in Hermes persistent memory, not in Argus state. See `refer
 2. **Discover sources** — 3–5 searches, assign trust tiers, record in tracker.
 3. **Create the cron job** — self-contained prompt, `argus` skill, `continuity=true`, stable `workdir`, delivery target.
 4. **Run a tick** — READ → EVAL → FOLD → SIGNAL → DISCOVER. Silent tick = success.
-5. **Write a heartbeat** — at the end of every tick, write `heartbeats/<slug>.json` (see `references/watchdog.md`).
+5. **Write a heartbeat** — at the end of every tick, write `heartbeats/<slug>.json` (see `skills/argus-watch/SKILL.md`).
 6. **Set up a watchdog** — separate cron job that checks heartbeats and alerts on stale ticks.
 
 ## Known Limitations
@@ -142,9 +142,14 @@ The user model lives in Hermes persistent memory, not in Argus state. See `refer
 
 ## Skill Changelog
 
+### 0.4.2
+- Added `skills/argus-watch/` — zero-token watchdog skill for cron job health.
+- Added `references/error-codes.md` — centralized error code reference.
+- Updated `references/github-discovery.md` — added "What GitHub Discovery Does" section.
+- Updated `references/memory-schema.md` — added Memory Tool API and multi-user support.
+
 ### 0.4.1
 - Added `references/hermes-conventions.md` — background processes, stale-write protection, parameter typing, context compression, error handling.
-- Added `references/watchdog.md` — heartbeat pattern and watchdog cron job specification.
 - Updated `references/briefing-template.md` — supports both markdown (bot-chat) and RSS 2.0 (feed) formats.
 - Updated description for better skill triggering.
 - Added "When to Use Which Reference" mapping table.
@@ -174,6 +179,6 @@ The user model lives in Hermes persistent memory, not in Argus state. See `refer
 - `references/converting-monitors-to-trackers.md` — migration and gate-selection guide.
 - `references/github-discovery.md` — bounded GitHub discovery, repository identity, and sparse-event retention.
 - `references/hermes-conventions.md` — Hermes platform conventions (background processes, stale-write, typing, context, errors).
-- `references/watchdog.md` — heartbeat pattern and watchdog cron job.
+- `skills/argus-watch/SKILL.md` — zero-token watchdog for cron job health.
 - `scripts/fold.py` — dependency-free news folding; includes `--self-test`.
 - `scripts/eval_signal.py` — diff/threshold gate; includes `--self-test`.

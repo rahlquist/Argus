@@ -1,10 +1,23 @@
 # GitHub Discovery Extension
 
-Argus may use GitHub as a discovery source, but repositories are persistent
-entities rather than disposable news URLs. Do not append one archive row for
-every API observation.
+## What GitHub Discovery Does
 
-## Storage contract
+- **Discovers new repositories** matching your interests (daily/weekly scans)
+- **Tracks repository activity** — detects meaningful `pushed_at` transitions
+- **Deduplicates by canonical identity** — `owner/repo` is the unique key
+- **Generates sparse events** — only first discovery and meaningful activity
+- **Briefs on new activity** — only when something material changes
+- **Respects hard bounds** — candidate, new-repo, and event limits per run
+- **Never clones or executes** — discovered repos are candidates for review only
+
+## What It Does Not Do
+
+- Does not track stars, forks, or other metrics as news events
+- Does not create archive rows for every API observation
+- Does not clone, install, import, or run discovered code
+- Does not replace the archive — it feeds into it with sparse events
+
+## Storage Contract
 
 Use three layers:
 

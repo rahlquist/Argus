@@ -49,20 +49,26 @@ argus/
 ├── skills/
 │   ├── README.md
 │   ├── _template/
-│   └── argus/
+│   ├── argus/
+│   │   ├── SKILL.md
+│   │   ├── references/
+│   │   │   ├── tracker-schema.md
+│   │   │   ├── diff-metrics.md
+│   │   │   ├── memory-schema.md
+│   │   │   ├── briefing-template.md
+│   │   │   ├── loop-prompt.md
+│   │   │   ├── converting-monitors-to-trackers.md
+│   │   │   ├── github-discovery.md
+│   │   │   ├── hermes-conventions.md
+│   │   │   └── error-codes.md
+│   │   └── scripts/
+│   │       ├── fold.py
+│   │       ├── eval_signal.py
+│   │       └── github_discovery.py
+│   └── argus-watch/
 │       ├── SKILL.md
-│       ├── references/
-│       │   ├── tracker-schema.md
-│       │   ├── diff-metrics.md
-│       │   ├── memory-schema.md
-│       │   ├── briefing-template.md
-│       │   ├── loop-prompt.md
-│       │   ├── converting-monitors-to-trackers.md
-│       │   └── github-discovery.md
 │       └── scripts/
-│           ├── fold.py
-│           ├── eval_signal.py
-│           └── github_discovery.py
+│           └── watchdog.py
 └── tests/skills/
     ├── test_argus_skill.py
     └── test_github_discovery.py
@@ -116,10 +122,9 @@ for the full migration rationale.
 
 ## Watchdog
 
-A separate cron job watches for ticks appearing on schedule. Each Argus tick
-writes a heartbeat file; the watchdog alerts if a heartbeat is stale. This
-decouples "did the job run?" from "did the job find anything?" See
-`skills/argus/references/watchdog.md`.
+A separate cron job watches for ticks appearing on schedule. The `argus-watch`
+skill provides a zero-token watchdog that monitors job health and alerts on
+failures. See `skills/argus-watch/SKILL.md`.
 
 Tracker mode is declared in `references/tracker-schema.md`. Runtime state stays
 under `${INTEL_DIR:-$HOME/.intel}` and is ignored by Git.

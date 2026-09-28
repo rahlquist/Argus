@@ -5,6 +5,26 @@ and the `memory` tool—not a private state-directory `memory.md` file. This
 keeps preferences shared across CLI, Desktop, messaging, Bot Mode, and cron
 runs, with one visible/editable source of truth.
 
+## Memory Tool API
+
+The `memory` tool uses an `operations` array for batch updates:
+
+```python
+memory(
+    target="memory",  # or "user"
+    operations=[
+        {"action": "add", "content": "User prefers primary sources."},
+        {"action": "replace", "old_text": "...", "new_text": "..."},
+        {"action": "remove", "old_text": "..."},
+    ]
+)
+```
+
+- `target="memory"` — personal notes (environment, conventions, tool quirks)
+- `target="user"` — user profile (name, role, preferences, style)
+- All operations apply atomically in one call
+- Memory is injected into every future turn
+
 ## What belongs in Hermes memory
 
 Store compact declarative facts:
@@ -28,6 +48,17 @@ execution ledger, or session history.
 - Consolidate stale/duplicate entries when the memory budget is tight.
 - Tracker-specific cursors and watermarks may use cron's bounded per-job
   notepad; they are not user-profile facts.
+
+## Multi-user support
+
+Hermes is multi-user. Each user has their own:
+- `~/.hermes/` directory (config, memory, skills, sessions)
+- Cron jobs (isolated by user)
+- State directory (`${INTEL_DIR:-$HOME/.intel}`)
+
+Argus does not need changes for multi-user — each user installs the skill
+independently and has isolated state. The only requirement is that the state
+directory is configurable (already done via `${INTEL_DIR:-$HOME/.intel}`).
 
 ## Migration from pre-v0.21 Argus
 

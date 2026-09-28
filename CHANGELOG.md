@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.2 — Argus Watch skill, error codes, GitHub discovery clarity
+
+- Added `skills/argus-watch/` — zero-token watchdog skill for cron job health
+- Added `references/error-codes.md` — centralized error code reference
+- Updated `references/github-discovery.md` — added "What GitHub Discovery Does" section
+- Updated `references/memory-schema.md` — added Memory Tool API and multi-user support
+- Removed `references/watchdog.md` — replaced by `skills/argus-watch/`
+- Version: 0.4.1 → 0.4.2
+
 ## 0.4.1 — Hermes conventions, watchdog, and briefing format
 
 - Added `references/hermes-conventions.md` — background process pattern,
