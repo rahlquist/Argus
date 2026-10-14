@@ -88,6 +88,20 @@ interpreted values stay distinguishable from measured ones.
 
 See [`references/collectors.md`](skills/argus/references/collectors.md).
 
+## Scratch and fold tuning
+
+DISCOVER is directed — it is seeded from interests you already track, so it can
+only return more of the same. **Scratch** is the opposite: undirected searches
+that propose *new trackers* as reviewable drafts, capped at 3 per run, with
+30-day expiry and accept-only creation. See
+[`references/scratch.md`](skills/argus/references/scratch.md).
+
+`fold.py --eval` measures the folding threshold against labeled fixtures instead
+of guessing it. The shipped starter set (`assets/fold-labels.jsonl`, 8 cases /
+24 labeled pairs from real archived rows) says the live `--sim 0.4` splits most
+true duplicates and `fold.py`'s own default of 0.6 folds nothing at all. See
+[`references/fold-tuning.md`](skills/argus/references/fold-tuning.md).
+
 ## Repository layout
 
 ```
@@ -118,13 +132,18 @@ argus/
 │   │   │   ├── error-codes.md
 │   │   │   ├── tick-ledger.md
 │   │   │   ├── collectors.md
-│   │   │   └── weekly-rollup.md
-│   │   └── scripts/
-│   │       ├── fold.py
-│   │       ├── eval_signal.py
-│   │       ├── github_discovery.py
-│   │       ├── argus_ticks.py
-│   │       └── argus_collect.py
+│   │   │   ├── weekly-rollup.md
+│   │   │   ├── scratch.md
+│   │   │   └── fold-tuning.md
+│   │   ├── scripts/
+│   │   │   ├── fold.py
+│   │   │   ├── eval_signal.py
+│   │   │   ├── github_discovery.py
+│   │   │   ├── argus_ticks.py
+│   │   │   ├── argus_collect.py
+│   │   │   └── argus_scratch.py
+│   │   └── assets/
+│   │       └── fold-labels.jsonl
 │   └── argus-watch/
 │       ├── SKILL.md
 │       └── scripts/
@@ -134,7 +153,8 @@ argus/
     ├── test_argus_watch.py
     ├── test_github_discovery.py
     ├── test_argus_ticks.py
-    └── test_argus_collect.py
+    ├── test_argus_collect.py
+    └── test_argus_scratch.py
 ```
 
 ## Install

@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.6.0 — Scratch proposals and measured fold thresholds
+
+- **Scratch** (`scripts/argus_scratch.py`): undirected tracker proposals.
+  DISCOVER is seeded from interests you already track, so it can only return
+  more of the same. Scratch runs deliberately undirected searches and proposes
+  *new* trackers as reviewable drafts — capped at 3 per run, deduped against
+  live trackers, idempotent by stable id, expiring after 30 days, and created
+  only on explicit human acceptance. `accept` emits a tracker spec skeleton.
+- **Measured fold thresholds** (`fold.py --eval`): the folding threshold was a
+  guess. `--eval` scores it against labeled fixtures and prints a
+  precision/recall/F1 table per threshold, with `n/a` for undefined metrics
+  instead of a misleading zero. `--fixtures` and `--sweep` are configurable.
+- **Labeled fixture set** (`assets/fold-labels.jsonl`): 8 cases / 24 labeled
+  pairs built from real archived rows, including the over-merge trap (two
+  near-identical motherboard titles that are different SKUs). Marked as an
+  agent-labeled starter set — review before trusting the table.
+- **Finding**: on that fixture set the live cron prompts' `--sim 0.4` splits
+  most true duplicates (recall 0.29) and `fold.py`'s own default of 0.6 folds
+  nothing at all (recall 0.00). Best F1 at 0.20. Directional evidence, not a
+  verdict — labels need human review before changing production thresholds.
+- **Index-based clustering**: `cluster_indices()` returns index lists so labeled
+  fixtures map labels back to members even when two rows are byte-identical.
+- Docs: `references/scratch.md`, `references/fold-tuning.md`.
+- Tests: `tests/skills/test_argus_scratch.py` (12 tests) plus fold-eval cases.
+
 ## 0.5.0 — Tick ledger, weekly rollup, and deterministic collectors
 
 - **Tick ledger** (`scripts/argus_ticks.py`): one bounded JSONL line per tick

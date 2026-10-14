@@ -1,7 +1,7 @@
 ---
 name: argus
 description: "Standing intelligence watch: tracks topics and typed metrics, folds duplicate coverage, and briefs only when material signals move. Silent tick = success."
-version: 0.5.0
+version: 0.6.0
 author: rahlquist (rahlquist), Hermes Agent
 license: MIT
 platforms: [linux, macos, windows]
@@ -17,7 +17,7 @@ Argus is a standing personal-intelligence watch: name what matters, and it reads
 
 Hermes v0.21 supplies the scheduler plumbing. Argus supplies the domain logic: tracker design, source discovery, trust ranking, URL-level deduplication, multi-source folding, threshold evaluation, briefing cards, adjacent-signal discovery, and bounded GitHub repository discovery. GitHub repositories use canonical identity plus sparse events; repeated observations never become archive growth. See `references/github-discovery.md`.
 
-Two instruments make the promise checkable rather than aspirational: a **tick ledger** records one line per tick and produces a weekly rollup of job counts, source health, and retirement candidates (`references/tick-ledger.md`), and **collectors** replace prose `extract:` instructions with named, testable functions so the agent never interprets data (`references/collectors.md`).
+Two instruments make the promise checkable rather than aspirational: a **tick ledger** records one line per tick and produces a weekly rollup of job counts, source health, and retirement candidates (`references/tick-ledger.md`), and **collectors** replace prose `extract:` instructions with named, testable functions so the agent never interprets data (`references/collectors.md`). Two more sharpen discovery: **scratch** proposes new trackers from undirected searches instead of more stories (`references/scratch.md`), and `fold.py --eval` measures the folding threshold against labeled fixtures instead of guessing it (`references/fold-tuning.md`).
 
 ## When to Use
 - User says "track/watch/monitor <X> and tell me when it moves", "keep me posted on…", or "brief me on <topic> daily/weekly".
@@ -73,7 +73,7 @@ The user model lives in Hermes persistent memory, not in Argus state. See `refer
    - *Complete when:* every source was attempted, every new accepted item was persisted once, and per-source outcomes are in hand.
 5. **EVAL.** For trackers with `eval:`, prefer a declared `collector:` — run `scripts/argus_collect.py` to write `state/<slug>.current.json` deterministically. Compare with `state/<slug>.json` through `scripts/eval_signal.py`, and persist the new state even on a silent tick.
    - *Complete when:* the verdict is computed; `passed=false` skips SIGNAL and delivery.
-6. **FOLD.** For news trackers, pass only newly collected rows through `scripts/fold.py` (word-level TF-IDF cosine, greedy single-linkage). Preserve rejected rows with explicit reasons.
+6. **FOLD.** For news trackers, pass only newly collected rows through `scripts/fold.py` (word-level TF-IDF cosine, greedy single-linkage). Preserve rejected rows with explicit reasons. Tune `--sim` from `fold.py --eval` evidence, not by feel (`references/fold-tuning.md`).
    - *Complete when:* every new row belongs to exactly one card or an explicit reject set.
 7. **SIGNAL.** Render surviving cards with headline, sourced facts, why it matters, source list, confidence, and verification. For metric trackers, lead with CHANGED lines and roll up UNCHANGED values.
    - *Complete when:* every emitted card satisfies `references/briefing-template.md` and is not a rehash of the previous run supplied by continuity.
@@ -92,6 +92,9 @@ The user model lives in Hermes persistent memory, not in Argus state. See `refer
 12. One scheduled job per machine runs `scripts/argus_ticks.py rollup --days 14 --silent-days 14 --prune`, passing a `--cadence` hint for any tracker slower than daily, and returns that output verbatim as the week's single message.
    - *Complete when:* exactly one rollup message is delivered, containing per-job tick counts, source health, and retirement candidates; the ledger is pruned to 14 days.
    - See `references/weekly-rollup.md` for the job definition and prompt.
+13. Separately, one weekly **scratch** job runs undirected searches and proposes new *trackers* via `scripts/argus_scratch.py propose` (cap 3, accept-only, 30-day expiry). It must never name anything already tracked.
+   - *Complete when:* 0–3 proposal cards are delivered with an accept command each; nothing is created automatically.
+   - See `references/scratch.md`.
 
 ## Choosing the Right Gate
 
@@ -112,12 +115,17 @@ The user model lives in Hermes persistent memory, not in Argus state. See `refer
 - A missing tick row is a failure signal, not a neutral gap. Record `silent` outcomes too, or the rollup cannot tell "nothing happened" from "the job never ran."
 - If a metric can be read deterministically, it must not use `llm_extract`. The escape hatch is for sources no collector can read, and it is always marked `deterministic: false`.
 - The weekly rollup is not a digest of briefings. It reports tick counts, source health, and retirement candidates — nothing else.
+- Scratch is undirected by definition. If its searches name something you already track, it is DISCOVER wearing a costume and will only surface more of the same.
+- Never auto-create a tracker from a scratch proposal. An accepted tracker is a permanent recurring cost; acceptance must be a human act.
+- `--sim` is a measured parameter, not a taste. Run `fold.py --eval` before changing it, and re-run it after changing the tokenizer.
 
 ## Verification
 - `python3 skills/argus/scripts/fold.py --self-test` passes.
 - `python3 skills/argus/scripts/eval_signal.py --self-test` passes.
 - `python3 skills/argus/scripts/argus_ticks.py --self-test` passes.
 - `python3 skills/argus/scripts/argus_collect.py --self-test` passes.
+- `python3 skills/argus/scripts/argus_scratch.py --self-test` passes.
+- `python3 skills/argus/scripts/fold.py --eval` produces a threshold table with a best row.
 - `python3 scripts/run_tests.sh` passes.
 - Frontmatter `name` matches the `skills/argus/` folder and description is at most 60 characters.
 - A real tracker dry-run proves changed and unchanged paths; unchanged produces no briefing.
@@ -206,6 +214,8 @@ The user model lives in Hermes persistent memory, not in Argus state. See `refer
 - `references/tick-ledger.md` — per-tick ledger, weekly rollup, source health, retirement candidates.
 - `references/collectors.md` — deterministic collectors, the `llm_extract` escape hatch, migration from `extract:`.
 - `references/weekly-rollup.md` — the Saturday rollup job definition and prompt.
+- `references/scratch.md` — undirected tracker proposals, lifecycle, and rules.
+- `references/fold-tuning.md` — fixture format, precision/recall table, threshold choice.
 - `references/hermes-conventions.md` — Hermes platform conventions (background processes, stale-write, typing, context, errors).
 - `references/troubleshooting.md` — common issues and resolutions.
 - `references/case-studies.md` — real-world signal detection examples.
@@ -215,3 +225,5 @@ The user model lives in Hermes persistent memory, not in Argus state. See `refer
 - `scripts/eval_signal.py` — diff/threshold gate; includes `--self-test`.
 - `scripts/argus_ticks.py` — tick ledger (record/rollup/prune); includes `--self-test`.
 - `scripts/argus_collect.py` — collector engine; includes `--self-test`.
+- `scripts/argus_scratch.py` — tracker proposal channel; includes `--self-test`.
+- `assets/fold-labels.jsonl` — labeled fold fixtures (agent starter set; review before trusting).
