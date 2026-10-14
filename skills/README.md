@@ -5,7 +5,7 @@ Index of skills in this repo. Add a row here whenever you publish a new one
 
 | Skill | Purpose | Tier | Status |
 |---|---|---|---|
-| [`argus`](argus/) | Standing intelligence watch: folds duplicate coverage, discovers bounded GitHub repository signals, surfaces beyond-radar findings, and gates metric/price briefings on real movement. Uses Hermes v0.21 native memory, continuity, monitor mode, notepad state, reasoning effort, and Bot Chat delivery. | monitoring / research | ✅ live |
+| [`argus`](argus/) | Standing intelligence watch: folds duplicate coverage, discovers bounded GitHub repository signals, records a per-tick ledger with a Saturday rollup (job counts, source health, retirement candidates), collects metrics with deterministic collectors, and gates briefings on real movement. Uses Hermes v0.21 native memory, continuity, monitor mode, notepad state, reasoning effort, and Bot Chat delivery. | monitoring / research | ✅ live |
 | [`argus-watch`](argus-watch/) | Zero-token watchdog for Hermes cron jobs. Monitors job health, alerts on failures, stays silent when all jobs are healthy. Runs as a `--no-agent` cron job. | monitoring / devops | ✅ live |
 
 ## How to read this

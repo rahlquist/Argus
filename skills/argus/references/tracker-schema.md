@@ -52,12 +52,15 @@ on_signal:                 # OPTIONAL — side-effects run ONLY when the gate pa
 metrics:                   # the watched values; READ step fills `current`
   - name: lemonade_version
     unit: version           # version|date|status|count|price
-    source: "https://api.github.com/repos/lemonade-sdk/lemonade/releases?per_page=1"
-    extract: "first release tag_name"
+    collector: 'github.release_tag(repo="lemonade-sdk/lemonade")'
   - name: bugzilla_2445615
     unit: status
-    source: "https://bugzilla.kernel.org/show_bug.cgi?id=2445615"
-    extract: "open|closed"
+    collector: 'github.issue_state(repo="owner/repo", number=2445615)'
+  - name: kernel_note
+    unit: status
+    # escape hatch: no collector can read this source; value must be supplied
+    # by the agent with --set, and is always marked deterministic: false
+    collector: 'llm_extract(prompt="one-line amdxdna kernel status")'
 created: 2026-08-18
 last_tick: null
 status: live               # live|paused
@@ -73,10 +76,14 @@ status: live               # live|paused
 | `trigger: abs` + `value: 20` | `\|new−old\| >= 20` (e.g. a stock-count delta of 20+). |
 | `items:` | Subset of metrics that gate the fire. For `threshold`, list **numeric only** (price/count); non-numeric items are ignored for the gate but still recorded for diff. Omit → all metrics gate. |
 
-`metrics:` declares each watched value, its `unit`, where to read it (`source`),
-and how to `extract` the scalar. Non-numeric units (`version`, `date`,
-`status`) diff by string equality; numeric (`price`, `count`) feed the
-threshold math. Full detail + report format: `references/diff-metrics.md`.
+`metrics:` declares each watched value, its `unit`, and how to read it.
+**Prefer `collector:`** — a named, testable function run by
+`scripts/argus_collect.py` (`references/collectors.md`). The legacy `source:` +
+`extract:` prose pair still works but asks the model to interpret data every
+tick; migrate mechanically readable metrics to collectors. Non-numeric units
+(`version`, `date`, `status`) diff by string equality; numeric (`price`,
+`count`) feed the threshold math. Full detail + report format:
+`references/diff-metrics.md`.
 
 ### `on_signal:` block (optional)
 

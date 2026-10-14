@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.5.0 — Tick ledger, weekly rollup, and deterministic collectors
+
+- **Tick ledger** (`scripts/argus_ticks.py`): one bounded JSONL line per tick
+  recording job, slug, outcome, counts, and per-source outcomes. Shared ledger
+  path (`$ARGUS_TICK_LEDGER`, default `~/.intel/state/ticks.jsonl`) so a single
+  weekly job can report on every Argus watch on the machine.
+- **Weekly rollup**: one Saturday message with a one-line
+  `completed / failed` count per job, a source-health section (trailing error
+  and zero-item streaks, reset by a successful read), and a retirement-candidate
+  section for trackers silent beyond the threshold. `--prune` drops records
+  older than the window after reporting, keeping the ledger at two weeks.
+- **Cadence-aware retirement**: `--cadence slug=monthly` (or `weekly`, `daily`,
+  `instant`, or a day count) raises the silence threshold so a legitimately
+  quiet tracker is not proposed for retirement.
+- **Collectors** (`scripts/argus_collect.py`): named, testable metric
+  functions replacing prose `extract:` instructions. Built-ins cover GitHub
+  releases/commits/issue state, HTTP JSON and regex reads, and local JSON sets,
+  paths, and glob counts. Output drops straight into
+  `state/<slug>.current.json`.
+- **Explicit escape hatch**: `llm_extract` is the only non-deterministic
+  collector. It requires an agent-supplied value and is always reported with
+  `deterministic: false`, so interpreted values are distinguishable from
+  measured ones.
+- **Structural anti-fabrication**: a failed collector produces
+  `value: "<error>"` with the exception text instead of relying on model
+  discipline to avoid inventing a value.
+- Docs: `references/tick-ledger.md`, `references/collectors.md`,
+  `references/weekly-rollup.md`; `tracker-schema.md` now leads with
+  `collector:`.
+- Tests: `tests/skills/test_argus_ticks.py`, `tests/skills/test_argus_collect.py`
+  (33 cases, no network, no disk).
+
 ## 0.4.3 — Troubleshooting, case studies, watchdog config, tests
 
 - Added `references/troubleshooting.md` — common issues and resolutions

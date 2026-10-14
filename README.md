@@ -35,6 +35,59 @@ for the storage contract and deduplication rules. GitHub collection, scoring,
 and classification orchestration are intentionally separate from these pure
 identity/event helpers.
 
+## Tick ledger and weekly rollup
+
+"A silent tick is success" is Argus's whole promise, and nothing used to be able
+to check it. The tick ledger fixes that: one bounded JSONL line per tick, and a
+single weekly message that reports on every Argus watch on the machine.
+
+```bash
+# after every tick
+python3 skills/argus/scripts/argus_ticks.py record '{"job":"motherboard sales watch",
+  "slug":"motherboard-sales","outcome":"silent","items_read":34,"items_new":0,
+  "sources":[{"source":"https://slickdeals.net/deals/motherboard/","status":200,"items":34,"ok":true}]}'
+
+# Saturdays, one message, then prune to a two-week window
+python3 skills/argus/scripts/argus_ticks.py rollup --days 14 --silent-days 14 --prune
+```
+
+The rollup contains three sections and nothing else:
+
+1. **Jobs** — one line per job: `name — N completed / M failed`.
+2. **Source health** — sources with a trailing error streak (≥2) or zero-item
+   streak (≥3); a successful read resets the streak.
+3. **Silent trackers — retirement candidates** — trackers silent beyond the
+   threshold, or that never fired.
+
+`--cadence slug=monthly` raises the threshold for legitimately quiet watches so
+the rollup does not propose retiring a healthy monthly tracker. See
+[`references/tick-ledger.md`](skills/argus/references/tick-ledger.md) and
+[`references/weekly-rollup.md`](skills/argus/references/weekly-rollup.md).
+
+## Collectors
+
+Prose `extract:` instructions ask the model to interpret data on every tick,
+which makes correctness depend on model discipline. Collectors replace them with
+named, testable functions:
+
+```yaml
+metrics:
+  - name: lemonade_version
+    unit: version
+    collector: 'github.release_tag(repo="lemonade-sdk/lemonade")'
+```
+
+Built-ins cover GitHub releases, commits, and issue state; HTTP JSON and regex
+reads; and local JSON paths, sets, and glob counts. A failed fetch becomes
+`value: "<error>"` with the exception text — structurally an error, never a
+fabricated or silently reused value.
+
+`llm_extract` is the single non-deterministic escape hatch. It requires an
+agent-supplied value and is always reported with `deterministic: false`, so
+interpreted values stay distinguishable from measured ones.
+
+See [`references/collectors.md`](skills/argus/references/collectors.md).
+
 ## Repository layout
 
 ```
@@ -60,18 +113,28 @@ argus/
 │   │   │   ├── converting-monitors-to-trackers.md
 │   │   │   ├── github-discovery.md
 │   │   │   ├── hermes-conventions.md
-│   │   │   └── error-codes.md
+│   │   │   ├── troubleshooting.md
+│   │   │   ├── case-studies.md
+│   │   │   ├── error-codes.md
+│   │   │   ├── tick-ledger.md
+│   │   │   ├── collectors.md
+│   │   │   └── weekly-rollup.md
 │   │   └── scripts/
 │   │       ├── fold.py
 │   │       ├── eval_signal.py
-│   │       └── github_discovery.py
+│   │       ├── github_discovery.py
+│   │       ├── argus_ticks.py
+│   │       └── argus_collect.py
 │   └── argus-watch/
 │       ├── SKILL.md
 │       └── scripts/
 │           └── watchdog.py
 └── tests/skills/
     ├── test_argus_skill.py
-    └── test_github_discovery.py
+    ├── test_argus_watch.py
+    ├── test_github_discovery.py
+    ├── test_argus_ticks.py
+    └── test_argus_collect.py
 ```
 
 ## Install
@@ -134,8 +197,9 @@ under `${INTEL_DIR:-$HOME/.intel}` and is ignored by Git.
 ```bash
 python3 skills/argus/scripts/fold.py --self-test
 python3 skills/argus/scripts/eval_signal.py --self-test
-python3 -m pytest tests/skills -q
-python3 scripts/run_tests.sh
+python3 skills/argus/scripts/argus_ticks.py --self-test
+python3 skills/argus/scripts/argus_collect.py --self-test
+uv run --with pytest pytest tests/skills -q    # or: bash scripts/run_tests.sh
 ```
 
 ## Add another skill

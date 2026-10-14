@@ -1,7 +1,7 @@
 ---
 name: argus
 description: "Standing intelligence watch: tracks topics and typed metrics, folds duplicate coverage, and briefs only when material signals move. Silent tick = success."
-version: 0.4.3
+version: 0.5.0
 author: rahlquist (rahlquist), Hermes Agent
 license: MIT
 platforms: [linux, macos, windows]
@@ -16,6 +16,8 @@ metadata:
 Argus is a standing personal-intelligence watch: name what matters, and it reads ranked sources, folds duplicate reporting, detects material movement, and sends a sourced briefing instead of a feed to scroll. A silent tick with no movement is the correct result.
 
 Hermes v0.21 supplies the scheduler plumbing. Argus supplies the domain logic: tracker design, source discovery, trust ranking, URL-level deduplication, multi-source folding, threshold evaluation, briefing cards, adjacent-signal discovery, and bounded GitHub repository discovery. GitHub repositories use canonical identity plus sparse events; repeated observations never become archive growth. See `references/github-discovery.md`.
+
+Two instruments make the promise checkable rather than aspirational: a **tick ledger** records one line per tick and produces a weekly rollup of job counts, source health, and retirement candidates (`references/tick-ledger.md`), and **collectors** replace prose `extract:` instructions with named, testable functions so the agent never interprets data (`references/collectors.md`).
 
 ## When to Use
 - User says "track/watch/monitor <X> and tell me when it moves", "keep me posted on…", or "brief me on <topic> daily/weekly".
@@ -52,6 +54,7 @@ All under `${INTEL_DIR:-$HOME/.intel}`:
 - `briefings/<date>-<slug>.md` — emitted cards (`references/briefing-template.md`).
 - `archive/<slug>.jsonl` — every accepted item; URL-level dedup history.
 - `state/<slug>.json` — last metric snapshot for `diff`/`threshold` trackers.
+- `$ARGUS_TICK_LEDGER` (default `~/.intel/state/ticks.jsonl`) — one bounded line per tick. Deliberately shared across profiles and workdirs so one weekly rollup covers every Argus job on the machine.
 
 The user model lives in Hermes persistent memory, not in Argus state. See `references/memory-schema.md` for migration from the pre-v0.21 `memory.md` file.
 
@@ -66,9 +69,9 @@ The user model lives in Hermes persistent memory, not in Argus state. See `refer
    - *Complete when:* `cronjob list` shows the job with the intended schedule, continuity, workdir, and delivery.
 
 ### B. Run a tick (READ → EVAL → FOLD → SIGNAL → DISCOVER)
-4. **READ.** Fetch recent items from every source. Append rows shaped as `{title, url, source, published, snippet, kind, trust}` to `archive/<slug>.jsonl`, skipping archived URLs.
-   - *Complete when:* every source was attempted and every new accepted item was persisted once.
-5. **EVAL.** For trackers with `eval:`, collect current values, compare with `state/<slug>.json` through `scripts/eval_signal.py`, and persist the new state even on a silent tick.
+4. **READ.** Fetch recent items from every source. Append rows shaped as `{title, url, source, published, snippet, kind, trust}` to `archive/<slug>.jsonl`, skipping archived URLs. Keep each source's outcome (`status`, `items`, `ok`) for the tick record.
+   - *Complete when:* every source was attempted, every new accepted item was persisted once, and per-source outcomes are in hand.
+5. **EVAL.** For trackers with `eval:`, prefer a declared `collector:` — run `scripts/argus_collect.py` to write `state/<slug>.current.json` deterministically. Compare with `state/<slug>.json` through `scripts/eval_signal.py`, and persist the new state even on a silent tick.
    - *Complete when:* the verdict is computed; `passed=false` skips SIGNAL and delivery.
 6. **FOLD.** For news trackers, pass only newly collected rows through `scripts/fold.py` (word-level TF-IDF cosine, greedy single-linkage). Preserve rejected rows with explicit reasons.
    - *Complete when:* every new row belongs to exactly one card or an explicit reject set.
@@ -82,6 +85,13 @@ The user model lives in Hermes persistent memory, not in Argus state. See `refer
    - *Complete when:* the memory update is durable and the next source-ranking decision reflects it.
 10. Return only the meaningful briefing. Let cron route the final output to `bot-chat:<profile>`, the origin, or another configured target. When there is nothing to report, produce no substantive content; monitor/no-agent gates are the only paths that guarantee scheduler-level suppression before delivery.
    - *Complete when:* the configured channel receives the briefing; a no-change tick produces no fabricated or padded report.
+11. **Record the tick.** Append exactly one ledger row with `scripts/argus_ticks.py record`, including `job`, `slug`, the final `outcome` (`fired|silent|error|skipped`), counts, and per-source outcomes. Record a row even on a silent run.
+   - *Complete when:* one row exists for this tick; a missing row is indistinguishable from a job that never ran.
+
+## D. Weekly rollup (Saturdays)
+12. One scheduled job per machine runs `scripts/argus_ticks.py rollup --days 14 --silent-days 14 --prune`, passing a `--cadence` hint for any tracker slower than daily, and returns that output verbatim as the week's single message.
+   - *Complete when:* exactly one rollup message is delivered, containing per-job tick counts, source health, and retirement candidates; the ledger is pruned to 14 days.
+   - See `references/weekly-rollup.md` for the job definition and prompt.
 
 ## Choosing the Right Gate
 
@@ -99,10 +109,15 @@ The user model lives in Hermes persistent memory, not in Argus state. See `refer
 - If READ finds nothing, do not manufacture a card. A silent tick is success.
 - Dry-run every diff/threshold gate with both a simulated change and a no-change case before enabling its schedule.
 - After any GitHub repository rename, verify visibility and metadata explicitly; redirects do not prove privacy was preserved.
+- A missing tick row is a failure signal, not a neutral gap. Record `silent` outcomes too, or the rollup cannot tell "nothing happened" from "the job never ran."
+- If a metric can be read deterministically, it must not use `llm_extract`. The escape hatch is for sources no collector can read, and it is always marked `deterministic: false`.
+- The weekly rollup is not a digest of briefings. It reports tick counts, source health, and retirement candidates — nothing else.
 
 ## Verification
 - `python3 skills/argus/scripts/fold.py --self-test` passes.
 - `python3 skills/argus/scripts/eval_signal.py --self-test` passes.
+- `python3 skills/argus/scripts/argus_ticks.py --self-test` passes.
+- `python3 skills/argus/scripts/argus_collect.py --self-test` passes.
 - `python3 scripts/run_tests.sh` passes.
 - Frontmatter `name` matches the `skills/argus/` folder and description is at most 60 characters.
 - A real tracker dry-run proves changed and unchanged paths; unchanged produces no briefing.
@@ -188,6 +203,9 @@ The user model lives in Hermes persistent memory, not in Argus state. See `refer
 - `references/loop-prompt.md` — self-contained Hermes v0.21 cron prompt and setup.
 - `references/converting-monitors-to-trackers.md` — migration and gate-selection guide.
 - `references/github-discovery.md` — bounded GitHub discovery, repository identity, and sparse-event retention.
+- `references/tick-ledger.md` — per-tick ledger, weekly rollup, source health, retirement candidates.
+- `references/collectors.md` — deterministic collectors, the `llm_extract` escape hatch, migration from `extract:`.
+- `references/weekly-rollup.md` — the Saturday rollup job definition and prompt.
 - `references/hermes-conventions.md` — Hermes platform conventions (background processes, stale-write, typing, context, errors).
 - `references/troubleshooting.md` — common issues and resolutions.
 - `references/case-studies.md` — real-world signal detection examples.
@@ -195,3 +213,5 @@ The user model lives in Hermes persistent memory, not in Argus state. See `refer
 - `skills/argus-watch/SKILL.md` — zero-token watchdog for cron job health.
 - `scripts/fold.py` — dependency-free news folding; includes `--self-test`.
 - `scripts/eval_signal.py` — diff/threshold gate; includes `--self-test`.
+- `scripts/argus_ticks.py` — tick ledger (record/rollup/prune); includes `--self-test`.
+- `scripts/argus_collect.py` — collector engine; includes `--self-test`.
